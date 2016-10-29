@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1477687583 source:c:\users\mar21\desktop\gits\vsb-prg1\proj_sem\main.cpp
+	<iostream>
+	<cstring>
+	<fstream>
+	<stdio.h>
+	<stdlib.h>
+
