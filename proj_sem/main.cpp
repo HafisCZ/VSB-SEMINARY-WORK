@@ -2,14 +2,21 @@
 #include <cstring>
 #include <fstream>
 #include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 using namespace std;
+
+// (c) 2016 HIRAISHIN SOFTWARE V01.B001.EX
 
 template <typename T> class DynamicHandler {
     private:
         T *__content;
         unsigned int __size;
+        virtual void dealloc() {
+            if (__size > 0) {
+                delete[] __content;
+            }
+        }
     public:
         DynamicHandler(void) : __size(0) {}
         DynamicHandler(const unsigned int _size) {
@@ -33,11 +40,6 @@ template <typename T> class DynamicHandler {
                 return true;
             } else {
                 return false;
-            }
-        }
-        virtual void dealloc() {
-            if (__size > 0) {
-                delete[] __content;
             }
         }
         bool expandBy(unsigned int _size) {
@@ -68,11 +70,11 @@ template <typename T> class DynamicHandler {
             }
         }
         void purge(void) {
+            dealloc();
             __size = 0;
-            delete[] __content;
             __content = NULL;
         }
-        T get(unsigned int _index) {
+        T& get(unsigned int _index) {
             if (_index >= 0 && _index < __size) {
                 return __content[_index];
             } else {
@@ -210,15 +212,41 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
 
 int main()
 {
+    char simplified;
     DynamicHandler<Cyclist> cyclists;
     std::string s;
 
-    std::cout << "Zadejte cestu k souboru: ";
-    getline(cin, s);
-    readFile(cyclists, s);
+    std::cout << "Zjednoduseny vypis? [Y/N] ";
+    simplified = std::cin.get();
+    std::cin.ignore();
 
+    std::cout << "Zadejte cestu k souboru: ";
+    std::getline(cin, s);
+    if (!readFile(cyclists, s)) {
+        char retry;
+        do {
+            std::cout << "Neplatna cesta, opakovat zadani? [Y/N] ";
+            retry = std::cin.get();
+            std::cin.ignore();
+            std::cout << "Zadejte novou cestu k souboru: ";
+            std::getline(cin, s);
+            if (readFile(cyclists, s)) break;
+        } while (retry == 'Y');
+    }
+
+    cout << endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << endl << endl;
     for (unsigned int i = 0; i < cyclists.size(); i++) {
-        cout << "There is!" << endl;
+        Cyclist sub = cyclists.get(i);
+        cout << sub.name << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalTime(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageTime(sub) << "h" << endl;
+        for (unsigned int j = 0; j < sub.trains.size() && simplified != 'Y'; j++) {
+            cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).time << "h" << endl;
+        }
+        if (i == cyclists.size() - 1) {
+            for (unsigned int j = 0; j < cyclists.get(i).trains.size(); j++) {
+                cyclists.get(i).trains.purge();
+            }
+            cyclists.purge();
+        }
     }
 
     return 0;
