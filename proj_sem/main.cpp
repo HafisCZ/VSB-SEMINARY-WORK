@@ -1,3 +1,8 @@
+/**
+    @author Martin 'Hafis' @ HIRAISHIN SOFTWARE
+    @version V01.B002.EX
+*/
+
 #include <iostream>
 #include <cstring>
 #include <fstream>
@@ -6,119 +11,248 @@
 
 using namespace std;
 
-// (c) 2016 HIRAISHIN SOFTWARE V01.B001.EX
+/**
+    DynamicHandler class for managing heap-stored objects
 
+    @param T type specifier
+*/
 template <typename T> class DynamicHandler {
-    private:
-        T *__content;
-        unsigned int __size;
+    protected:
+        T *content;
+        uint32_t range;
+
+        /**
+            Releases heap memory when size is greater than 0
+        */
         virtual void dealloc() {
-            if (__size > 0) {
-                delete[] __content;
+            if (this->range > 0) {
+                delete[] this->content;
             }
         }
     public:
-        DynamicHandler(void) : __size(0) {}
-        DynamicHandler(const unsigned int _size) {
-            if (_size > 0) {
-                __size = _size;
-                __content = new T[__size];
+        /**
+            Constructor (automatic)
+        */
+        DynamicHandler(void) {
+            this->range = 0;
+        }
+
+        /**
+            Constructor (manual)
+
+            @param range of storage
+        */
+        DynamicHandler(uint32_t range) {
+            if (range > 0) {
+                this->range = range;
+                this->content = new T[this->range];
             } else {
-                __size = 0;
+                this->range = 0;
             }
         }
-        bool expand(unsigned int _size) {
-            if (_size > __size) {
-                T *__copyContent = new T[_size];
-                for (unsigned int i = 0; i < __size; i++) {
-                    __copyContent[i] = __content[i];
+
+        /**
+            Expands storage
+
+            @param range of new storage
+            @return success value
+        */
+        bool expand(uint32_t range) {
+            if (range > this->range) {
+                T *replacement = new T[range];
+                for (uint32_t i = 0; i < this->range; i++) {
+                    replacement[i] = this->content[i];
                 }
                 dealloc();
-                __content = __copyContent;
-                __size = _size;
-                __copyContent = NULL;
+                this->content = replacement;
+                this->range = range;
+                replacement = NULL;
                 return true;
             } else {
                 return false;
             }
         }
-        bool expandBy(unsigned int _size) {
-            if (_size > 0) {
-                return expand(_size + __size);
+
+        /**
+            Shrinks storage by
+
+            @param range modifier of new storage
+            @return success value
+        */
+        bool expandBy(uint32_t range) {
+            if (range > 0) {
+                return expand(range + this->range);
             } else {
                 return false;
             }
         }
-        bool shrink(unsigned int _size) {
-            if (_size < __size) {
-                T *__copyContent = new T[_size];
-                for (unsigned int i = 0; i < _size; i++) {
-                    __copyContent[i] = __content[i];
+
+        /**
+            Removes element from storage
+
+            @param index of element
+            @return success value
+        */
+        bool remove(uint32_t index) {
+            if (index >= 0 && index < this->range) {
+                T* replacement = new T[this->range - 1];
+                for (uint32_t i = 0; i < this->range && i != index; i++) {
+                    replacement[(i > index ? i : i - 1)] = this->content[i];
                 }
                 dealloc();
-                __content = __copyContent;
-                __size = _size;
-                __copyContent = NULL;
+                this->content = replacement;
+                this->range -= 1;
+                replacement = NULL;
                 return true;
             } else {
                 return false;
             }
         }
-        void prefill(T _value) {
-            for (int i = 0; i < __size; i++) {
-                __content[i] = _value;
+
+        /**
+            Shrinks storage
+
+            @param range of new storage
+            @return success value
+        */
+        bool shrink(uint32_t range) {
+            if (range < this->range) {
+                T* replacement = new T[range];
+                for (uint32_t i = 0; i < range; i++) {
+                    replacement[i] = this->content[i];
+                }
+                dealloc();
+                this->content = replacement;
+                this->range = range;
+                replacement = NULL;
+                return true;
+            } else {
+                return false;
             }
         }
+
+        /**
+            Shrinks storage by
+
+            @param range modifier of new storage
+            @return success value
+        */
+        bool shrinkBy(uint32_t range) {
+            if (range > 0) {
+                return shrink(this->range - range);
+            } else {
+                return false;
+            }
+        }
+
+        /**
+            Sets each value in content
+
+            @param value being set
+        */
+        void prefill(T value) {
+            for (uint32_t i = 0; i < this->range; i++) {
+                this->content[i] = value;
+            }
+        }
+
+        /**
+            Clear heap memory
+        */
         void purge(void) {
             dealloc();
-            __size = 0;
-            __content = NULL;
+            this->range = 0;
+            this->content = NULL;
         }
-        T& get(unsigned int _index) {
-            if (_index >= 0 && _index < __size) {
-                return __content[_index];
+
+        /**
+            Retrieve object at index
+
+            @param index where is stored
+            @return object at index
+        */
+        T& get(uint32_t index) {
+            if (index >= 0 && index < this->range) {
+                return this->content[index];
             } else {
-                return __content[0];
+                T* null = NULL;
+                return *null;
             }
         }
-        bool set (unsigned int _index, T _value) {
-            if (_index >= 0 && _index < __size) {
-                __content[_index] = _value;
+
+        /**
+            Set value in storage on index
+
+            @param index where to store
+            @param value to be stored
+            @return success value
+        */
+        bool set(uint32_t index, T value) {
+            if (index >= 0 && index < this->range) {
+                this->content[index] = value;
                 return true;
             } else {
                 return false;
             }
         }
-        unsigned int size(void) {
-            return __size;
+
+        /**
+            Get content size
+
+            @return content size
+        */
+        uint32_t size(void) {
+            return this->range;
         }
-        bool push_back(T _value) {
-            expandBy(1);
-            if (set(__size - 1, _value)) {
+
+        /**
+            Push value to back of content, expands storage by 1
+
+            @param value to be stored
+            @return success value
+        */
+        bool push_back(T value) {
+            if (expandBy(1) && set(this->range - 1, value)) {
                 return true;
             } else {
                 return false;
             }
         }
-        bool push_front(T _value) {
-            T *__copyContent = new T[__size + 1];
-            for (unsigned int i = 0; i < __size; i++) {
-                __copyContent[i + 1] = __content[i];
+
+        /**
+            Push value to front of content, expands storage by 1
+
+            @param value to be stored
+            @return success value
+        */
+        bool push_front(T value) {
+            T *replacement = new T[this->range + 1];
+            for (uint32_t i = 0; i < this->range; i++) {
+                replacement[i + 1] = this->content[i];
             }
             dealloc();
-            __content = __copyContent;
-            __size++;
-            __copyContent = NULL;
-            if (set(0, _value)) {
+            this->content = replacement;
+            this->range += 1;
+            replacement = NULL;
+            if (set(0, value)) {
                 return true;
             } else {
                 return false;
             }
         }
-        bool extract(T _copy[], unsigned int _size) {
-            if (_size >= 0 && _size <= __size) {
-                for (unsigned int i = 0; i < _size; i++) {
-                    _copy[i] = __content[i];
+
+        /**
+            Extracts specified range of data from content
+
+            @param target[] where to copy
+            @param begin starting index
+            @param end ending index
+            @return success value
+        */
+        bool extract(T target[], uint32_t begin, uint32_t end) {
+            if (begin >= 0 && end <= this->range && begin <= end) {
+                for (uint32_t i = begin; i < end; i++) {
+                    target[i] = this->content[i];
                 }
                 return true;
             } else {
@@ -127,10 +261,83 @@ template <typename T> class DynamicHandler {
         }
 };
 
+// STRUCT DECLARATIONS
+
 typedef struct {
     double distance, time;
 } Training;
 
+typedef struct {
+    std::string name;
+    DynamicHandler<Training> trains;
+} Cyclist;
+
+// DECLARATIONS
+
+void sort(DynamicHandler<Cyclist>& cyclists);
+bool readFile(DynamicHandler<Cyclist> &database, std::string source);
+double getTotalDistance(Cyclist c);
+double getTotalTime(Cyclist c);
+double getAverageDistance(Cyclist c);
+double getAverageTime(Cyclist c);
+Training newTraining(double distance, double time);
+Cyclist newCyclist(std::string name);
+
+
+// MAIN
+
+int main()
+{
+    char simplified;
+    DynamicHandler<Cyclist> cyclists;
+    std::string s;
+
+    std::cout << "Zjednoduseny vypis? [Y/N] ";
+    simplified = std::cin.get();
+    std::cin.ignore();
+
+    std::cout << "Zadejte cestu k souboru: ";
+    std::getline(cin, s);
+    if (!readFile(cyclists, s)) {
+        char retry;
+        do {
+            std::cout << "Neplatna cesta, opakovat zadani? [Y/N] ";
+            retry = std::cin.get();
+            std::cin.ignore();
+            if (retry == 'N') break;
+            std::cout << "Zadejte novou cestu k souboru: ";
+            std::getline(cin, s);
+            if (readFile(cyclists, s)) break;
+        } while (retry == 'Y');
+    }
+
+    cout << endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << endl << endl;
+    sort(cyclists);
+    for (unsigned int i = 0; i < cyclists.size(); i++) {
+        Cyclist sub = cyclists.get(i);
+        cout << sub.name << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalTime(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageTime(sub) << "h" << endl;
+        for (unsigned int j = 0; j < sub.trains.size() && simplified != 'Y'; j++) {
+            cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).time << "h" << endl;
+        }
+        if (i == cyclists.size() - 1) {
+            for (unsigned int j = 0; j < cyclists.get(i).trains.size(); j++) {
+                cyclists.get(i).trains.purge();
+            }
+            cyclists.purge();
+        }
+    }
+    return 0;
+}
+
+// DEFINITIONS
+
+/**
+    Creates new instance of Training structure
+
+    @param distance of training
+    @param time of training
+    @return Training
+*/
 Training newTraining(double distance, double time) {
     Training f;
     f.distance = distance;
@@ -138,25 +345,44 @@ Training newTraining(double distance, double time) {
     return f;
 }
 
-typedef struct {
-    std::string name;
-    DynamicHandler<Training> trains;
-} Cyclist;
+/**
+    Creates new instance of Cyclist structure
 
+    @param name of cyclist
+    @return Cyclist
+*/
 Cyclist newCyclist(std::string name) {
     Cyclist c;
     c.name = name;
     return c;
 }
 
-double getTotalDistance(Cyclist c) {
-    double total = 0;
-    for (unsigned int i = 0; i < c.trains.size(); i++) {
-        total += c.trains.get(i).distance;
-    }
-    return total;
+/**
+        Return average time of cyclist
+
+        @param c cyclist measured
+        @return average time
+*/
+double getAverageTime(Cyclist c) {
+    return getTotalTime(c) / c.trains.size();
 }
 
+/**
+        Return average distance of cyclist
+
+        @param c cyclist measured
+        @return average distance
+*/
+double getAverageDistance(Cyclist c) {
+    return getTotalDistance(c) / c.trains.size();
+}
+
+/**
+        Return total time of cyclist
+
+        @param c cyclist measured
+        @return total time
+*/
 double getTotalTime(Cyclist c) {
     double total = 0;
     for (unsigned int i = 0; i < c.trains.size(); i++) {
@@ -165,14 +391,27 @@ double getTotalTime(Cyclist c) {
     return total;
 }
 
-double getAverageDistance(Cyclist c) {
-    return getTotalDistance(c) / c.trains.size();
+/**
+        Return total distance of cyclist
+
+        @param c cyclist measured
+        @return total distance
+*/
+double getTotalDistance(Cyclist c) {
+    double total = 0;
+    for (unsigned int i = 0; i < c.trains.size(); i++) {
+        total += c.trains.get(i).distance;
+    }
+    return total;
 }
 
-double getAverageTime(Cyclist c) {
-    return getTotalTime(c) / c.trains.size();
-}
+/**
+        Reads specified file and fills DynamicHandler of Cyclist
 
+        @param database DynamicHandler target
+        @param source path to file
+        @return success value
+*/
 bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     std::ifstream file(source.c_str());
     if (file.is_open()) {
@@ -210,44 +449,23 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     }
 }
 
-int main()
-{
-    char simplified;
-    DynamicHandler<Cyclist> cyclists;
-    std::string s;
+/**
+    Sorts content of DynamicHandler of Cyclists by total time
 
-    std::cout << "Zjednoduseny vypis? [Y/N] ";
-    simplified = std::cin.get();
-    std::cin.ignore();
-
-    std::cout << "Zadejte cestu k souboru: ";
-    std::getline(cin, s);
-    if (!readFile(cyclists, s)) {
-        char retry;
-        do {
-            std::cout << "Neplatna cesta, opakovat zadani? [Y/N] ";
-            retry = std::cin.get();
-            std::cin.ignore();
-            std::cout << "Zadejte novou cestu k souboru: ";
-            std::getline(cin, s);
-            if (readFile(cyclists, s)) break;
-        } while (retry == 'Y');
-    }
-
-    cout << endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << endl << endl;
-    for (unsigned int i = 0; i < cyclists.size(); i++) {
-        Cyclist sub = cyclists.get(i);
-        cout << sub.name << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalTime(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageTime(sub) << "h" << endl;
-        for (unsigned int j = 0; j < sub.trains.size() && simplified != 'Y'; j++) {
-            cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).time << "h" << endl;
-        }
-        if (i == cyclists.size() - 1) {
-            for (unsigned int j = 0; j < cyclists.get(i).trains.size(); j++) {
-                cyclists.get(i).trains.purge();
+    @param cyclists DynamicHandler of cyclists
+*/
+void sort(DynamicHandler<Cyclist>& cyclists) {
+    Cyclist temporary;
+    bool sortFlag = true;
+    for (uint32_t i = 1; i <= cyclists.size() && sortFlag; i++) {
+        sortFlag = false;
+        for (uint32_t j = 0; j < cyclists.size() - 1; j++) {
+            if (getTotalTime(cyclists.get(j + 1)) > getTotalTime(cyclists.get(j))) {
+                temporary = cyclists.get(j);
+                cyclists.set(j, cyclists.get(j + 1));
+                cyclists.set(j + 1, temporary);
+                sortFlag = true;
             }
-            cyclists.purge();
         }
     }
-
-    return 0;
 }

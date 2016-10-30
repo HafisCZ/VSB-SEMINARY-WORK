@@ -6,12 +6,12 @@
 	<stdio.h>
 	<stdlib.h>
 
-1477762384 source:c:\users\mar21\desktop\gits\vsb-seminary-work\proj_sem\main.cpp
+1477848749 source:c:\users\mar21\desktop\gits\vsb-seminary-work\proj_sem\main.cpp
 	<iostream>
 	<cstring>
 	<fstream>
 	<stdio.h>
-	<stdlib.h>
+	<cstdlib>
 
 1477766040 source:\\mar21\users\mar21\desktop\gits\vsb-seminary-work\proj_sem\main.cpp
 	<iostream>
