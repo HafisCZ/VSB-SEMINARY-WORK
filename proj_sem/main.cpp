@@ -1,30 +1,23 @@
-/**
-    @author Martin 'Hafis' @ HIRAISHIN SOFTWARE
-    @version V01.B002.EX
-*/
-
 #include <iostream>
 #include <cstring>
 #include <fstream>
 #include <stdio.h>
 #include <cstdlib>
 
-using namespace std;
-
 /**
-    DynamicHandler class for managing heap-stored objects
+    Class for managing heap-stored objects.
 
     @param T type specifier
 */
 template <typename T> class DynamicHandler {
-    protected:
+    private:
         T *content;
         uint32_t range;
 
         /**
             Releases heap memory when size is greater than 0
         */
-        virtual void dealloc() {
+        void dealloc() {
             if (this->range > 0) {
                 delete[] this->content;
             }
@@ -38,7 +31,7 @@ template <typename T> class DynamicHandler {
         }
 
         /**
-            Constructor (manual)
+            Constructor (initial size specified at initialization)
 
             @param range of storage
         */
@@ -96,8 +89,12 @@ template <typename T> class DynamicHandler {
         bool remove(uint32_t index) {
             if (index >= 0 && index < this->range) {
                 T* replacement = new T[this->range - 1];
-                for (uint32_t i = 0; i < this->range && i != index; i++) {
-                    replacement[(i > index ? i : i - 1)] = this->content[i];
+                for (uint32_t i = 0; i < this->range; i++) {
+                    if (i == index) {
+                        continue;
+                    } else {
+                        replacement[(i > index ? i : i - 1)] = this->content[i];
+                    }
                 }
                 dealloc();
                 this->content = replacement;
@@ -261,30 +258,36 @@ template <typename T> class DynamicHandler {
         }
 };
 
-// STRUCT DECLARATIONS
+/**
+    Structure with training's time and distance
 
+    @param Training.distance Distance of training
+    @param Training.duration Duration of training
+*/
 typedef struct {
-    double distance, time;
+    double distance, duration;
 } Training;
 
+/**
+    Structure with cyclist's name and training sessions
+
+    @param Cyclist.name Name of cyclist
+    @param Cyclist.trains DynamicHandler with training sessions
+*/
 typedef struct {
     std::string name;
     DynamicHandler<Training> trains;
 } Cyclist;
 
-// DECLARATIONS
-
 void sort(DynamicHandler<Cyclist>& cyclists);
 bool readFile(DynamicHandler<Cyclist> &database, std::string source);
+bool outputHtml(DynamicHandler<Cyclist> cyclists, std::string target);
 double getTotalDistance(Cyclist c);
-double getTotalTime(Cyclist c);
+double getTotalDuration(Cyclist c);
 double getAverageDistance(Cyclist c);
-double getAverageTime(Cyclist c);
-Training newTraining(double distance, double time);
+double getAverageDuration(Cyclist c);
+Training newTraining(double distance, double duration);
 Cyclist newCyclist(std::string name);
-
-
-// MAIN
 
 int main()
 {
@@ -292,32 +295,29 @@ int main()
     DynamicHandler<Cyclist> cyclists;
     std::string s;
 
-    std::cout << "Zjednoduseny vypis? [Y/N] ";
+    std::cout << "[CONZOLE]\tZjednoduseny vypis? [Y/N]: ";
     simplified = std::cin.get();
     std::cin.ignore();
 
-    std::cout << "Zadejte cestu k souboru: ";
-    std::getline(cin, s);
+    std::cout << "[NACTENI]\tZadejte cestu k souboru: ";
+    std::getline(std::cin, s);
     if (!readFile(cyclists, s)) {
-        char retry;
-        do {
-            std::cout << "Neplatna cesta, opakovat zadani? [Y/N] ";
-            retry = std::cin.get();
-            std::cin.ignore();
-            if (retry == 'N') break;
-            std::cout << "Zadejte novou cestu k souboru: ";
-            std::getline(cin, s);
-            if (readFile(cyclists, s)) break;
-        } while (retry == 'Y');
+        std::cout << "Soubor nenalezen!" << std::endl;
     }
 
-    cout << endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << endl << endl;
+    std::cout << "[VYSTUP]\tZadejte cestu k souboru (nebo nechte prazdne): ";
+    std::getline(std::cin, s);
+    if (s.length() > 1 && !outputHtml(cyclists, s)) {
+        std::cout << "Export nebyl proveden!" << std::endl;
+    }
+
+    std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
     sort(cyclists);
     for (unsigned int i = 0; i < cyclists.size(); i++) {
         Cyclist sub = cyclists.get(i);
-        cout << sub.name << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalTime(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageTime(sub) << "h" << endl;
+        std::cout << sub.name << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalDuration(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageDuration(sub) << "h" << std::endl;
         for (unsigned int j = 0; j < sub.trains.size() && simplified != 'Y'; j++) {
-            cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).time << "h" << endl;
+            std::cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).duration << "h" << std::endl;
         }
         if (i == cyclists.size() - 1) {
             for (unsigned int j = 0; j < cyclists.get(i).trains.size(); j++) {
@@ -329,19 +329,17 @@ int main()
     return 0;
 }
 
-// DEFINITIONS
-
 /**
     Creates new instance of Training structure
 
     @param distance of training
-    @param time of training
+    @param duration of training
     @return Training
 */
-Training newTraining(double distance, double time) {
+Training newTraining(double distance, double duration) {
     Training f;
     f.distance = distance;
-    f.time = time;
+    f.duration = duration;
     return f;
 }
 
@@ -358,13 +356,13 @@ Cyclist newCyclist(std::string name) {
 }
 
 /**
-        Return average time of cyclist
+        Return average duration of cyclists training
 
         @param c cyclist measured
-        @return average time
+        @return average duration
 */
-double getAverageTime(Cyclist c) {
-    return getTotalTime(c) / c.trains.size();
+double getAverageDuration(Cyclist c) {
+    return getTotalDuration(c) / c.trains.size();
 }
 
 /**
@@ -378,15 +376,15 @@ double getAverageDistance(Cyclist c) {
 }
 
 /**
-        Return total time of cyclist
+        Return total duration of cyclists training
 
         @param c cyclist measured
-        @return total time
+        @return total duration
 */
-double getTotalTime(Cyclist c) {
+double getTotalDuration(Cyclist c) {
     double total = 0;
     for (unsigned int i = 0; i < c.trains.size(); i++) {
-        total += c.trains.get(i).time;
+        total += c.trains.get(i).duration;
     }
     return total;
 }
@@ -413,7 +411,7 @@ double getTotalDistance(Cyclist c) {
         @return success value
 */
 bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
-    std::ifstream file(source.c_str());
+    std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         std::string temp, temp2 = "";
         DynamicHandler<std::string> s;
@@ -450,6 +448,44 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
 }
 
 /**
+    Writes all information in DynamicHandler with Cyclists into HTML format
+
+    @param cyclists DynamicHandler of Cyclists
+    @param target path where output file should be
+    @return success value
+*/
+bool outputHtml(DynamicHandler<Cyclist> cyclists, std::string target) {
+    std::fstream file (target.c_str(), std::ios::out | std::ios::trunc);
+    if (file.is_open()) {
+        file << "<html>" << std::endl << "<head>" << std::endl << "<meta http-equiv=\"Content-Type\" content=\"test/html;charset=utf-8\">" << std::endl;
+        file << "<title>Seznam cyklistu</title>" << std::endl << "</head>" << std::endl << "<body>" << std::endl;
+        file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
+        file << "<caption>Statistika cyklistu</caption>" << std::endl;
+        file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Celkovy cas na kole [h]</th><th>Prumerna ujeta vzdalenost [km]</th><th>Prumerny cas na kole [h]</th></tr>" << std::endl;
+        for (uint32_t i = 0; i < cyclists.size(); i++) {
+            file << "<tr><th>" << cyclists.get(i).name << "</th><th>" << getTotalDistance(cyclists.get(i)) << "</th><th>" << getTotalDuration(cyclists.get(i)) << "</th><th>" << getAverageDistance(cyclists.get(i)) << "</th><th>" << getAverageDuration(cyclists.get(i)) << "</th></tr>" << std::endl;
+        }
+        file << "</table>" << std::endl;
+        file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
+        file << "<caption>Treninky cyklistu</caption>" << std::endl;
+        file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Cas treninku [h]</th></tr>" << std::endl;
+        for (uint32_t i = 0; i < cyclists.size(); i++) {
+            file << "<tr><th rowspan=" << cyclists.size() << ">" << cyclists.get(i).name << "</th>" << std::endl;
+            for (uint32_t j = 0; j < cyclists.get(i).trains.size(); j++) {
+                file << "<tr><td>" << cyclists.get(i).trains.get(j).distance << "</td><td>" << cyclists.get(i).trains.get(j).duration << "</td></tr>" << std::endl;
+            }
+        }
+        file << "</table>" << std::endl;
+        file << "</body>" << std::endl << "</html>" << std::endl;
+        file.close();
+        std::cout << "HTML soubor vygenerovan!" << std::endl;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
     Sorts content of DynamicHandler of Cyclists by total time
 
     @param cyclists DynamicHandler of cyclists
@@ -460,7 +496,7 @@ void sort(DynamicHandler<Cyclist>& cyclists) {
     for (uint32_t i = 1; i <= cyclists.size() && sortFlag; i++) {
         sortFlag = false;
         for (uint32_t j = 0; j < cyclists.size() - 1; j++) {
-            if (getTotalTime(cyclists.get(j + 1)) > getTotalTime(cyclists.get(j))) {
+            if (getTotalDuration(cyclists.get(j + 1)) > getTotalDuration(cyclists.get(j))) {
                 temporary = cyclists.get(j);
                 cyclists.set(j, cyclists.get(j + 1));
                 cyclists.set(j + 1, temporary);
