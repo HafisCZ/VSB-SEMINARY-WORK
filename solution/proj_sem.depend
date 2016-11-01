@@ -20,3 +20,10 @@
 	<stdio.h>
 	<stdlib.h>
 
+1478030134 source:c:\users\mar21\desktop\gits\vsb-seminary-work\solution\main.cpp
+	<iostream>
+	<cstring>
+	<fstream>
+	<stdio.h>
+	<cstdlib>
+

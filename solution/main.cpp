@@ -217,6 +217,23 @@ template <typename T> class DynamicHandler {
         }
 
         /**
+            Push whole DynamicHandler into another DynamicHandler
+
+            @param insertion DynamicHandler to be inserted
+            @return success value
+        */
+        bool insert(DynamicHandler<T> insertion) {
+            if (insertion.size() > 0) {
+                for (uint64_t i = 0; i < insertion.size(); i++) {
+                    push_back(insertion.get(i));
+                }
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
             Push value to front of content, expands storage by 1
 
             @param value to be stored
@@ -256,6 +273,27 @@ template <typename T> class DynamicHandler {
                 return false;
             }
         }
+
+        /**
+            Operator [] overload, returns object at index
+
+            @param index index
+            @return object at index
+        */
+        T& operator[](uint64_t index) {
+            return get(index);
+        }
+
+        /**
+            Operator + overload, return DynamicHandler
+
+            @param insertion which should be joined
+            @return DynamicHandler
+        */
+        DynamicHandler<T>& operator+(const DynamicHandler<T>& insertion) {
+            insert(insertion);
+            return *this;
+        }
 };
 
 /**
@@ -291,21 +329,17 @@ Cyclist newCyclist(std::string name);
 
 int main()
 {
-    char simplified;
     DynamicHandler<Cyclist> cyclists;
     std::string s;
 
-    std::cout << "[CONZOLE]\tZjednoduseny vypis? [Y/N]: ";
-    simplified = std::cin.get();
-    std::cin.ignore();
-
-    std::cout << "[NACTENI]\tZadejte cestu k souboru: ";
+    std::cout << "[IMPORT] Zadejte cestu: ";
     std::getline(std::cin, s);
     if (!readFile(cyclists, s)) {
         std::cout << "Soubor nenalezen!" << std::endl;
+        return 2;
     }
 
-    std::cout << "[VYSTUP]\tZadejte cestu k souboru (nebo nechte prazdne): ";
+    std::cout << "[EXPORT] Zadejte cestu: ";
     std::getline(std::cin, s);
     if (s.length() > 1 && !outputHtml(cyclists, s)) {
         std::cout << "Export nebyl proveden!" << std::endl;
@@ -315,8 +349,8 @@ int main()
     sort(cyclists);
     for (unsigned int i = 0; i < cyclists.size(); i++) {
         Cyclist sub = cyclists.get(i);
-        std::cout << sub.name << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalDuration(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageDuration(sub) << "h" << std::endl;
-        for (unsigned int j = 0; j < sub.trains.size() && simplified != 'Y'; j++) {
+        std::cout << std::endl << sub.name << std::endl << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalDuration(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageDuration(sub) << "h" << std::endl;
+        for (unsigned int j = 0; j < sub.trains.size(); j++) {
             std::cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).duration << "h" << std::endl;
         }
         if (i == cyclists.size() - 1) {
@@ -414,12 +448,12 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         std::string temp, temp2 = "";
-        DynamicHandler<std::string> s;
+        DynamicHandler<std::string> temporary;
         while (std::getline(file, temp)) {
             bool database_flag = false;
-            for (unsigned int i = 0; i < temp.length(); i++) {
+            for (unsigned int i = 0; i < temp.length() && temporary.size() < 4; i++) {
                 if (temp[i] == ';') {
-                    s.push_back(temp2);
+                    temporary.push_back(temp2);
                     temp2 = "";
                 } else {
                     temp2 += temp[i];
@@ -427,18 +461,18 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
             }
             for (unsigned int i = 0; i <= database.size() && !database_flag; i++) {
                 if (i < database.size()) {
-                    if (strcmp(database.get(i).name.c_str(), s.get(0).c_str()) == 0) {
-                      database.get(i).trains.push_back(newTraining(strtod(s.get(1).c_str(), NULL), strtod(s.get(2).c_str(), NULL)));
+                    if (strcmp(database.get(i).name.c_str(), temporary.get(0).c_str()) == 0) {
+                      database.get(i).trains.push_back(newTraining(strtod(temporary.get(1).c_str(), NULL), strtod(temporary.get(2).c_str(), NULL)));
                       break;
                     }
                 } else {
                     database_flag = true;
-                    Cyclist c = newCyclist(s.get(0));
-                    c.trains.push_back(newTraining(strtod(s.get(1).c_str(), NULL), strtod(s.get(2).c_str(), NULL)));
+                    Cyclist c = newCyclist(temporary.get(0));
+                    c.trains.push_back(newTraining(strtod(temporary.get(1).c_str(), NULL), strtod(temporary.get(2).c_str(), NULL)));
                     database.push_back(c);
                 }
             }
-            s.purge();
+            temporary.purge();
         }
         file.close();
         return true;
@@ -470,7 +504,7 @@ bool outputHtml(DynamicHandler<Cyclist> cyclists, std::string target) {
         file << "<caption>Treninky cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Cas treninku [h]</th></tr>" << std::endl;
         for (uint32_t i = 0; i < cyclists.size(); i++) {
-            file << "<tr><th rowspan=" << cyclists.size() << ">" << cyclists.get(i).name << "</th>" << std::endl;
+            file << "<tr><td rowspan=" << cyclists.get(i).trains.size() + 1 << ">" << cyclists.get(i).name << "</td><td>Prumer: " << getAverageDistance(cyclists.get(i)) << "</td><td>Prumer: " << getAverageDuration(cyclists.get(i)) << "</td></tr>" << std::endl;
             for (uint32_t j = 0; j < cyclists.get(i).trains.size(); j++) {
                 file << "<tr><td>" << cyclists.get(i).trains.get(j).distance << "</td><td>" << cyclists.get(i).trains.get(j).duration << "</td></tr>" << std::endl;
             }
