@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstring>
+#include <string>
 #include <fstream>
 #include <stdio.h>
 #include <cstdlib>
@@ -12,7 +13,7 @@
 template <typename T> class DynamicHandler {
     private:
         T *content;
-        uint32_t range;
+        uint32_t range, iterator;
 
         /**
             Releases heap memory when size is greater than 0
@@ -23,11 +24,15 @@ template <typename T> class DynamicHandler {
             }
         }
     public:
+        enum ITERATOR_W {DECREASE, IGNORE, INCREASE};
+        enum EXPANSION_W {LINEAR, LINEAR2, EXPONENTIAL};
+
         /**
             Constructor (automatic)
         */
         DynamicHandler(void) {
             this->range = 0;
+            iter_reset();
         }
 
         /**
@@ -42,6 +47,7 @@ template <typename T> class DynamicHandler {
             } else {
                 this->range = 0;
             }
+            iter_reset();
         }
 
         /**
@@ -163,21 +169,6 @@ template <typename T> class DynamicHandler {
         }
 
         /**
-            Retrieve object at index
-
-            @param index where is stored
-            @return object at index
-        */
-        T& get(uint32_t index) {
-            if (index >= 0 && index < this->range) {
-                return this->content[index];
-            } else {
-                T* null = NULL;
-                return *null;
-            }
-        }
-
-        /**
             Set value in storage on index
 
             @param index where to store
@@ -280,8 +271,13 @@ template <typename T> class DynamicHandler {
             @param index index
             @return object at index
         */
-        T& operator[](uint64_t index) {
-            return get(index);
+        T& operator[](uint32_t index) {
+            if (index >= 0 && index < this->range) {
+                return this->content[index];
+            } else {
+                T* null = NULL;
+                return *null;
+            }
         }
 
         /**
@@ -290,9 +286,64 @@ template <typename T> class DynamicHandler {
             @param insertion which should be joined
             @return DynamicHandler
         */
-        DynamicHandler<T>& operator+(const DynamicHandler<T>& insertion) {
-            insert(insertion);
+        DynamicHandler<T>& operator+(const T& insertion) {
+            push_back(insertion);
             return *this;
+        }
+
+        /**
+            Reset iterator to 0
+        */
+        void iter_reset(void) {
+            this->iterator = 0;
+        }
+
+        /**
+            Set iterator to custom value
+
+            @param iterator_new new index
+            @return success value
+        */
+        bool iter_set(uint32_t iterator_new) {
+            if (iterator_new > 0 && iterator_new < this->range) {
+                this->iterator = iterator_new;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+            Return object at iterator point
+
+            @param iteratorSetting what to do with internal iterator
+            @return object at index
+        */
+        T& iter_current(ITERATOR_W iteratorSetting) {
+            uint32_t iterator_old = this->iterator;
+            if (iteratorSetting == DECREASE) {
+                if (this->iterator < 1) {
+                    this->iterator = this->range - 1;
+                } else {
+                    this->iterator--;
+                }
+            } else if (iteratorSetting == INCREASE) {
+                if (this->iterator + 1 > this->range - 1) {
+                    this->iterator = 0;
+                } else {
+                    this->iterator++;
+                }
+            }
+            return this->content[iterator_old];
+        }
+
+        /**
+            Return iterator position
+
+            @return index in iterator
+        */
+        uint32_t iter_at(void) {
+            return this->iterator;
         }
 };
 
@@ -319,7 +370,9 @@ typedef struct {
 
 void sort(DynamicHandler<Cyclist>& cyclists);
 bool readFile(DynamicHandler<Cyclist> &database, std::string source);
-bool outputHtml(DynamicHandler<Cyclist> cyclists, std::string target);
+bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target);
+uint32_t getUniqueCyclists(std::string source);
+uint32_t getCyclistsTrainings(Cyclist c, std::string source);
 double getTotalDistance(Cyclist c);
 double getTotalDuration(Cyclist c);
 double getAverageDistance(Cyclist c);
@@ -337,6 +390,8 @@ int main()
     if (!readFile(cyclists, s)) {
         std::cout << "Soubor nenalezen!" << std::endl;
         return 2;
+    } else {
+        sort(cyclists);
     }
 
     std::cout << "[EXPORT] Zadejte cestu: ";
@@ -346,16 +401,16 @@ int main()
     }
 
     std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
-    sort(cyclists);
     for (unsigned int i = 0; i < cyclists.size(); i++) {
-        Cyclist sub = cyclists.get(i);
+        Cyclist sub = cyclists[i];
         std::cout << std::endl << sub.name << std::endl << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalDuration(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageDuration(sub) << "h" << std::endl;
         for (unsigned int j = 0; j < sub.trains.size(); j++) {
-            std::cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains.get(j).distance << "km / " << sub.trains.get(j).duration << "h" << std::endl;
+            std::cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains[j].distance << "km / " << sub.trains[j].duration << "h" << std::endl;
         }
+        sub.trains.purge();
         if (i == cyclists.size() - 1) {
-            for (unsigned int j = 0; j < cyclists.get(i).trains.size(); j++) {
-                cyclists.get(i).trains.purge();
+            for (unsigned int j = 0; j < cyclists.size(); j++) {
+                cyclists[i].trains.purge();
             }
             cyclists.purge();
         }
@@ -418,7 +473,7 @@ double getAverageDistance(Cyclist c) {
 double getTotalDuration(Cyclist c) {
     double total = 0;
     for (unsigned int i = 0; i < c.trains.size(); i++) {
-        total += c.trains.get(i).duration;
+        total += c.trains[i].duration;
     }
     return total;
 }
@@ -432,7 +487,7 @@ double getTotalDuration(Cyclist c) {
 double getTotalDistance(Cyclist c) {
     double total = 0;
     for (unsigned int i = 0; i < c.trains.size(); i++) {
-        total += c.trains.get(i).distance;
+        total += c.trains[i].distance;
     }
     return total;
 }
@@ -447,30 +502,33 @@ double getTotalDistance(Cyclist c) {
 bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
-        std::string temp, temp2 = "";
-        DynamicHandler<std::string> temporary;
+        database.expand(getUniqueCyclists(source));
+        database.iter_reset();
+        std::string temp;
         while (std::getline(file, temp)) {
-            bool database_flag = false;
-            for (unsigned int i = 0; i < temp.length() && temporary.size() < 4; i++) {
-                if (temp[i] == ';') {
-                    temporary.push_back(temp2);
-                    temp2 = "";
-                } else {
-                    temp2 += temp[i];
+            DynamicHandler<std::string> temporary(3);
+            double train_distance;
+            double train_duration;
+            bool exists = false;
+            size_t position;
+            while ((position = temp.find(';')) != std::string::npos) {
+                temporary.iter_current(temporary.INCREASE) = temp.substr(0, position);
+                temp.erase(0, position + 1);
+            }
+            temporary[2] = temp;
+            train_distance = strtod(temporary[1].c_str(), NULL);
+            train_duration = strtod(temporary[2].c_str(), NULL);
+            for (uint32_t i = 0; i < database.size() && !exists; i++) {
+                if (database[i].name == temporary[0]) {
+                    database[i].trains.iter_current(DynamicHandler<Training>::INCREASE) = newTraining(train_distance, train_duration);
+                    exists = true;
                 }
             }
-            for (unsigned int i = 0; i <= database.size() && !database_flag; i++) {
-                if (i < database.size()) {
-                    if (strcmp(database.get(i).name.c_str(), temporary.get(0).c_str()) == 0) {
-                      database.get(i).trains.push_back(newTraining(strtod(temporary.get(1).c_str(), NULL), strtod(temporary.get(2).c_str(), NULL)));
-                      break;
-                    }
-                } else {
-                    database_flag = true;
-                    Cyclist c = newCyclist(temporary.get(0));
-                    c.trains.push_back(newTraining(strtod(temporary.get(1).c_str(), NULL), strtod(temporary.get(2).c_str(), NULL)));
-                    database.push_back(c);
-                }
+            if (!exists) {
+                Cyclist c = newCyclist(temporary[0]);
+                database.iter_current(database.IGNORE) = c;
+                database.iter_current(database.IGNORE).trains.expand(getCyclistsTrainings(c, source));
+                database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = newTraining(train_distance, train_duration);
             }
             temporary.purge();
         }
@@ -488,7 +546,7 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     @param target path where output file should be
     @return success value
 */
-bool outputHtml(DynamicHandler<Cyclist> cyclists, std::string target) {
+bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target) {
     std::fstream file (target.c_str(), std::ios::out | std::ios::trunc);
     if (file.is_open()) {
         file << "<html>" << std::endl << "<head>" << std::endl << "<meta http-equiv=\"Content-Type\" content=\"test/html;charset=utf-8\">" << std::endl;
@@ -497,16 +555,16 @@ bool outputHtml(DynamicHandler<Cyclist> cyclists, std::string target) {
         file << "<caption>Statistika cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Celkovy cas na kole [h]</th><th>Prumerna ujeta vzdalenost [km]</th><th>Prumerny cas na kole [h]</th></tr>" << std::endl;
         for (uint32_t i = 0; i < cyclists.size(); i++) {
-            file << "<tr><th>" << cyclists.get(i).name << "</th><th>" << getTotalDistance(cyclists.get(i)) << "</th><th>" << getTotalDuration(cyclists.get(i)) << "</th><th>" << getAverageDistance(cyclists.get(i)) << "</th><th>" << getAverageDuration(cyclists.get(i)) << "</th></tr>" << std::endl;
+            file << "<tr><th>" << cyclists[i].name << "</th><th>" << getTotalDistance(cyclists[i]) << "</th><th>" << getTotalDuration(cyclists[i]) << "</th><th>" << getAverageDistance(cyclists[i]) << "</th><th>" << getAverageDuration(cyclists[i]) << "</th></tr>" << std::endl;
         }
         file << "</table>" << std::endl;
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
         file << "<caption>Treninky cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Cas treninku [h]</th></tr>" << std::endl;
         for (uint32_t i = 0; i < cyclists.size(); i++) {
-            file << "<tr><td rowspan=" << cyclists.get(i).trains.size() + 1 << ">" << cyclists.get(i).name << "</td><td>Prumer: " << getAverageDistance(cyclists.get(i)) << "</td><td>Prumer: " << getAverageDuration(cyclists.get(i)) << "</td></tr>" << std::endl;
-            for (uint32_t j = 0; j < cyclists.get(i).trains.size(); j++) {
-                file << "<tr><td>" << cyclists.get(i).trains.get(j).distance << "</td><td>" << cyclists.get(i).trains.get(j).duration << "</td></tr>" << std::endl;
+            file << "<tr><td rowspan=" << cyclists[i].trains.size() + 1 << ">" << cyclists[i].name << "</td><td>Prumer: " << getAverageDistance(cyclists[i]) << "</td><td>Prumer: " << getAverageDuration(cyclists[i]) << "</td></tr>" << std::endl;
+            for (uint32_t j = 0; j < cyclists[i].trains.size(); j++) {
+                file << "<tr><td>" << cyclists[i].trains[j].distance << "</td><td>" << cyclists[i].trains[j].duration << "</td></tr>" << std::endl;
             }
         }
         file << "</table>" << std::endl;
@@ -530,12 +588,57 @@ void sort(DynamicHandler<Cyclist>& cyclists) {
     for (uint32_t i = 1; i <= cyclists.size() && sortFlag; i++) {
         sortFlag = false;
         for (uint32_t j = 0; j < cyclists.size() - 1; j++) {
-            if (getTotalDuration(cyclists.get(j + 1)) > getTotalDuration(cyclists.get(j))) {
-                temporary = cyclists.get(j);
-                cyclists.set(j, cyclists.get(j + 1));
-                cyclists.set(j + 1, temporary);
+            if (getTotalDuration(cyclists[j + 1]) > getTotalDuration(cyclists[j])) {
+                temporary = cyclists[j];
+                cyclists[j] = cyclists[j + 1];
+                cyclists[j + 1] = temporary;
                 sortFlag = true;
             }
         }
     }
+}
+
+/**
+    Get total amount of cyclists
+
+    @param source path to file
+    @return amount of cyclists
+*/
+uint32_t getUniqueCyclists(std::string source) {
+    std::fstream file(source.c_str(), std::ios::in);
+    uint32_t count = 0;
+    if (file.is_open()) {
+        std::string temp, safe = "";
+        while (std::getline(file, temp)) {
+            temp = temp.substr(0, temp.find(';'));
+            if(safe.find(temp) == std::string::npos) {
+                safe += temp;
+                count++;
+            }
+        }
+        file.close();
+    }
+    return count;
+}
+
+/**
+    Get total trainings of cyclist in file
+
+    @param c cyclist
+    @param source path to file
+    @return amount of trainings
+*/
+uint32_t getCyclistsTrainings(Cyclist c, std::string source) {
+    uint32_t count = 0;
+    std::fstream file(source.c_str(), std::ios::in);
+    if (file.is_open()) {
+        std::string temp;
+        while (std::getline(file, temp)) {
+            if (c.name == temp.substr(0, temp.find(';'))) {
+                count++;
+            }
+        }
+        file.close();
+    }
+    return count;
 }
