@@ -1,8 +1,9 @@
 #include <iostream>
-#include <cstring>
-#include <string>
 #include <fstream>
+#include <string>
+
 #include <stdio.h>
+#include <cstring>
 #include <cstdlib>
 
 /**
@@ -13,8 +14,8 @@
 template <typename T> class DynamicHandler {
     private:
         T *content;
-        uint32_t range;
-        int32_t iterator;
+        unsigned int range;
+        int iterator;
 
         /**
             Releases heap memory when size is greater than 0
@@ -40,7 +41,7 @@ template <typename T> class DynamicHandler {
 
             @param range of storage
         */
-        DynamicHandler(uint32_t range) {
+        DynamicHandler(unsigned int range) {
             if (range > 0) {
                 this->range = range;
                 this->content = new T[this->range];
@@ -56,10 +57,10 @@ template <typename T> class DynamicHandler {
             @param range of new storage
             @return success value
         */
-        bool expand(uint32_t range) {
+        bool expand(unsigned int range) {
             if (range > this->range) {
                 T *replacement = new T[range];
-                for (uint32_t i = 0; i < this->range; i++) {
+                for (unsigned int i = 0; i < this->range; i++) {
                     replacement[i] = this->content[i];
                 }
                 dealloc();
@@ -79,7 +80,7 @@ template <typename T> class DynamicHandler {
             @param range modifier of new storage
             @return success value
         */
-        bool expandBy(uint32_t range) {
+        bool expandBy(unsigned int range) {
             if (range > 0) {
                 return expand(range + this->range);
             } else {
@@ -93,10 +94,10 @@ template <typename T> class DynamicHandler {
             @param index of element
             @return success value
         */
-        bool remove(uint32_t index) {
+        bool remove(unsigned int index) {
             if (index >= 0 && index < this->range) {
                 T* replacement = new T[this->range - 1];
-                for (uint32_t i = 0; i < this->range; i++) {
+                for (unsigned int i = 0; i < this->range; i++) {
                     if (i == index) {
                         continue;
                     } else {
@@ -120,10 +121,10 @@ template <typename T> class DynamicHandler {
             @param range of new storage
             @return success value
         */
-        bool shrink(uint32_t range) {
+        bool shrink(unsigned int range) {
             if (range < this->range) {
                 T* replacement = new T[range];
-                for (uint32_t i = 0; i < range; i++) {
+                for (unsigned int i = 0; i < range; i++) {
                     replacement[i] = this->content[i];
                 }
                 dealloc();
@@ -143,7 +144,7 @@ template <typename T> class DynamicHandler {
             @param range modifier of new storage
             @return success value
         */
-        bool shrinkBy(uint32_t range) {
+        bool shrinkBy(unsigned int range) {
             if (range > 0) {
                 return shrink(this->range - range);
             } else {
@@ -157,7 +158,7 @@ template <typename T> class DynamicHandler {
             @param value being set
         */
         void prefill(T value) {
-            for (uint32_t i = 0; i < this->range; i++) {
+            for (unsigned int i = 0; i < this->range; i++) {
                 this->content[i] = value;
             }
         }
@@ -178,7 +179,7 @@ template <typename T> class DynamicHandler {
             @param value to be stored
             @return success value
         */
-        bool set(uint32_t index, T value) {
+        bool set(unsigned int index, T value) {
             if (index >= 0 && index < this->range) {
                 this->content[index] = value;
                 return true;
@@ -192,7 +193,7 @@ template <typename T> class DynamicHandler {
 
             @return content size
         */
-        uint32_t size(void) {
+        unsigned int size(void) {
             return this->range;
         }
 
@@ -235,7 +236,7 @@ template <typename T> class DynamicHandler {
         */
         bool push_front(T value) {
             T *replacement = new T[this->range + 1];
-            for (uint32_t i = 0; i < this->range; i++) {
+            for (unsigned int i = 0; i < this->range; i++) {
                 replacement[i + 1] = this->content[i];
             }
             dealloc();
@@ -257,9 +258,9 @@ template <typename T> class DynamicHandler {
             @param end ending index
             @return success value
         */
-        bool extract(T target[], uint32_t begin, uint32_t end) {
+        bool extract(T target[], unsigned int begin, unsigned int end) {
             if (begin >= 0 && end <= this->range && begin <= end) {
-                for (uint32_t i = begin; i < end; i++) {
+                for (unsigned int i = begin; i < end; i++) {
                     target[i] = this->content[i];
                 }
                 return true;
@@ -274,7 +275,7 @@ template <typename T> class DynamicHandler {
             @param index index
             @return object at index
         */
-        T& operator[](uint32_t index) {
+        T& operator[](unsigned int index) {
             if (index >= 0 && index < this->range) {
                 return this->content[index];
             } else {
@@ -307,7 +308,7 @@ template <typename T> class DynamicHandler {
             @param iterator_new new index
             @return success value
         */
-        bool iter_set(int32_t iterator_new) {
+        bool iter_set(int iterator_new) {
             if (iterator_new > -1 && iterator_new < this->range) {
                 this->iterator = iterator_new;
                 return true;
@@ -323,8 +324,8 @@ template <typename T> class DynamicHandler {
             @return object at index
         */
         T& iter_current(ITERATOR_W iteratorSetting) {
-            int32_t iterator_old = this->iterator;
-            int32_t iterator_new = this->iterator + (int32_t) iteratorSetting;std::cout << iterator_new << std::endl;
+            int iterator_old = this->iterator;
+            int iterator_new = this->iterator + (int) iteratorSetting;
             if (iterator_new > -1 && iterator_new < this->range) {
                 this->iterator = iterator_new;
             } else if (iterator_new < 0) {
@@ -340,7 +341,7 @@ template <typename T> class DynamicHandler {
 
             @return index in iterator
         */
-        int32_t iter_at(void) {
+        int iter_at(void) {
             return this->iterator;
         }
 };
@@ -369,8 +370,8 @@ typedef struct {
 void sort(DynamicHandler<Cyclist>& cyclists);
 bool readFile(DynamicHandler<Cyclist> &database, std::string source);
 bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target);
-uint32_t getUniqueCyclists(std::string source);
-uint32_t getCyclistsTrainings(Cyclist c, std::string source);
+unsigned int getUniqueCyclists(std::string source);
+unsigned int getCyclistsTrainings(Cyclist c, std::string source);
 double getTotalDistance(Cyclist c);
 double getTotalDuration(Cyclist c);
 double getAverageDistance(Cyclist c);
@@ -517,7 +518,7 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
             temporary[2] = temp;
             train_distance = strtod(temporary[1].c_str(), NULL);
             train_duration = strtod(temporary[2].c_str(), NULL);
-            for (uint32_t i = 0; i < database.size() && !exists; i++) {
+            for (unsigned int i = 0; i < database.size() && !exists; i++) {
                 if (database[i].name == temporary[0]) {
                     database[i].trains.iter_current(DynamicHandler<Training>::INCREASE) = newTraining(train_distance, train_duration);
                     exists = true;
@@ -554,16 +555,16 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target) {
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
         file << "<caption>Statistika cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Celkovy cas na kole [h]</th><th>Prumerna ujeta vzdalenost [km]</th><th>Prumerny cas na kole [h]</th></tr>" << std::endl;
-        for (uint32_t i = 0; i < cyclists.size(); i++) {
+        for (unsigned int i = 0; i < cyclists.size(); i++) {
             file << "<tr><th>" << cyclists[i].name << "</th><th>" << getTotalDistance(cyclists[i]) << "</th><th>" << getTotalDuration(cyclists[i]) << "</th><th>" << getAverageDistance(cyclists[i]) << "</th><th>" << getAverageDuration(cyclists[i]) << "</th></tr>" << std::endl;
         }
         file << "</table>" << std::endl;
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
         file << "<caption>Treninky cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Cas treninku [h]</th></tr>" << std::endl;
-        for (uint32_t i = 0; i < cyclists.size(); i++) {
+        for (unsigned int i = 0; i < cyclists.size(); i++) {
             file << "<tr><td rowspan=" << cyclists[i].trains.size() + 1 << ">" << cyclists[i].name << "</td><td>Prumer: " << getAverageDistance(cyclists[i]) << "</td><td>Prumer: " << getAverageDuration(cyclists[i]) << "</td></tr>" << std::endl;
-            for (uint32_t j = 0; j < cyclists[i].trains.size(); j++) {
+            for (unsigned int j = 0; j < cyclists[i].trains.size(); j++) {
                 file << "<tr><td>" << cyclists[i].trains[j].distance << "</td><td>" << cyclists[i].trains[j].duration << "</td></tr>" << std::endl;
             }
         }
@@ -585,9 +586,9 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target) {
 void sort(DynamicHandler<Cyclist>& cyclists) {
     Cyclist temporary;
     bool sortFlag = true;
-    for (uint32_t i = 1; i <= cyclists.size() && sortFlag; i++) {
+    for (unsigned int i = 1; i <= cyclists.size() && sortFlag; i++) {
         sortFlag = false;
-        for (uint32_t j = 0; j < cyclists.size() - 1; j++) {
+        for (unsigned int j = 0; j < cyclists.size() - 1; j++) {
             if (getTotalDuration(cyclists[j + 1]) > getTotalDuration(cyclists[j])) {
                 temporary = cyclists[j];
                 cyclists[j] = cyclists[j + 1];
@@ -604,9 +605,9 @@ void sort(DynamicHandler<Cyclist>& cyclists) {
     @param source path to file
     @return amount of cyclists
 */
-uint32_t getUniqueCyclists(std::string source) {
+unsigned int getUniqueCyclists(std::string source) {
     std::fstream file(source.c_str(), std::ios::in);
-    uint32_t count = 0;
+    unsigned int count = 0;
     if (file.is_open()) {
         std::string temp, safe = "";
         while (std::getline(file, temp)) {
@@ -628,8 +629,8 @@ uint32_t getUniqueCyclists(std::string source) {
     @param source path to file
     @return amount of trainings
 */
-uint32_t getCyclistsTrainings(Cyclist c, std::string source) {
-    uint32_t count = 0;
+unsigned int getCyclistsTrainings(Cyclist c, std::string source) {
+    unsigned int count = 0;
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         std::string temp;
