@@ -13,7 +13,8 @@
 template <typename T> class DynamicHandler {
     private:
         T *content;
-        uint32_t range, iterator;
+        uint32_t range;
+        int32_t iterator;
 
         /**
             Releases heap memory when size is greater than 0
@@ -24,8 +25,7 @@ template <typename T> class DynamicHandler {
             }
         }
     public:
-        enum ITERATOR_W {DECREASE, IGNORE, INCREASE};
-        enum EXPANSION_W {LINEAR, LINEAR2, EXPONENTIAL};
+        enum ITERATOR_W {DECREASE = -1, IGNORE = 0, INCREASE = 1};
 
         /**
             Constructor (automatic)
@@ -66,6 +66,7 @@ template <typename T> class DynamicHandler {
                 this->content = replacement;
                 this->range = range;
                 replacement = NULL;
+                iter_reset();
                 return true;
             } else {
                 return false;
@@ -106,6 +107,7 @@ template <typename T> class DynamicHandler {
                 this->content = replacement;
                 this->range -= 1;
                 replacement = NULL;
+                iter_reset();
                 return true;
             } else {
                 return false;
@@ -128,6 +130,7 @@ template <typename T> class DynamicHandler {
                 this->content = replacement;
                 this->range = range;
                 replacement = NULL;
+                iter_reset();
                 return true;
             } else {
                 return false;
@@ -304,8 +307,8 @@ template <typename T> class DynamicHandler {
             @param iterator_new new index
             @return success value
         */
-        bool iter_set(uint32_t iterator_new) {
-            if (iterator_new > 0 && iterator_new < this->range) {
+        bool iter_set(int32_t iterator_new) {
+            if (iterator_new > -1 && iterator_new < this->range) {
                 this->iterator = iterator_new;
                 return true;
             } else {
@@ -320,19 +323,14 @@ template <typename T> class DynamicHandler {
             @return object at index
         */
         T& iter_current(ITERATOR_W iteratorSetting) {
-            uint32_t iterator_old = this->iterator;
-            if (iteratorSetting == DECREASE) {
-                if (this->iterator < 1) {
-                    this->iterator = this->range - 1;
-                } else {
-                    this->iterator--;
-                }
-            } else if (iteratorSetting == INCREASE) {
-                if (this->iterator + 1 > this->range - 1) {
-                    this->iterator = 0;
-                } else {
-                    this->iterator++;
-                }
+            int32_t iterator_old = this->iterator;
+            int32_t iterator_new = this->iterator + (int32_t) iteratorSetting;std::cout << iterator_new << std::endl;
+            if (iterator_new > -1 && iterator_new < this->range) {
+                this->iterator = iterator_new;
+            } else if (iterator_new < 0) {
+                this->iterator = this->range - 1;
+            } else if (iterator_new > this->range - 1){
+                this->iterator = 0;
             }
             return this->content[iterator_old];
         }
@@ -342,7 +340,7 @@ template <typename T> class DynamicHandler {
 
             @return index in iterator
         */
-        uint32_t iter_at(void) {
+        int32_t iter_at(void) {
             return this->iterator;
         }
 };
@@ -502,11 +500,12 @@ double getTotalDistance(Cyclist c) {
 bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
+        DynamicHandler<std::string> temporary(3);
         database.expand(getUniqueCyclists(source));
         database.iter_reset();
         std::string temp;
         while (std::getline(file, temp)) {
-            DynamicHandler<std::string> temporary(3);
+            temporary.iter_reset();
             double train_distance;
             double train_duration;
             bool exists = false;
@@ -530,8 +529,9 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
                 database.iter_current(database.IGNORE).trains.expand(getCyclistsTrainings(c, source));
                 database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = newTraining(train_distance, train_duration);
             }
-            temporary.purge();
+
         }
+        temporary.purge();
         file.close();
         return true;
     } else {
