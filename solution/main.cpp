@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 
-#include <stdio.h>
+#include <cstdio>
 #include <cstring>
 #include <cstdlib>
 
@@ -41,7 +41,7 @@ template <typename T> class DynamicHandler {
 
             @param range of storage
         */
-        DynamicHandler(unsigned int range) {
+        DynamicHandler(const unsigned int& range) {
             if (range > 0) {
                 this->range = range;
                 this->content = new T[this->range];
@@ -57,7 +57,7 @@ template <typename T> class DynamicHandler {
             @param range of new storage
             @return success value
         */
-        bool expand(unsigned int range) {
+        bool expand(const unsigned int& range) {
             if (range > this->range) {
                 T *replacement = new T[range];
                 for (unsigned int i = 0; i < this->range; i++) {
@@ -80,7 +80,7 @@ template <typename T> class DynamicHandler {
             @param range modifier of new storage
             @return success value
         */
-        bool expandBy(unsigned int range) {
+        bool expandBy(const unsigned int& range) {
             if (range > 0) {
                 return expand(range + this->range);
             } else {
@@ -94,7 +94,7 @@ template <typename T> class DynamicHandler {
             @param index of element
             @return success value
         */
-        bool remove(unsigned int index) {
+        bool remove(const unsigned int& index) {
             if (index >= 0 && index < this->range) {
                 T* replacement = new T[this->range - 1];
                 for (unsigned int i = 0; i < this->range; i++) {
@@ -121,7 +121,7 @@ template <typename T> class DynamicHandler {
             @param range of new storage
             @return success value
         */
-        bool shrink(unsigned int range) {
+        bool shrink(const unsigned int& range) {
             if (range < this->range) {
                 T* replacement = new T[range];
                 for (unsigned int i = 0; i < range; i++) {
@@ -144,7 +144,7 @@ template <typename T> class DynamicHandler {
             @param range modifier of new storage
             @return success value
         */
-        bool shrinkBy(unsigned int range) {
+        bool shrinkBy(const unsigned int& range) {
             if (range > 0) {
                 return shrink(this->range - range);
             } else {
@@ -157,7 +157,7 @@ template <typename T> class DynamicHandler {
 
             @param value being set
         */
-        void prefill(T value) {
+        void prefill(const T& value) {
             for (unsigned int i = 0; i < this->range; i++) {
                 this->content[i] = value;
             }
@@ -179,7 +179,7 @@ template <typename T> class DynamicHandler {
             @param value to be stored
             @return success value
         */
-        bool set(unsigned int index, T value) {
+        bool set(const unsigned int& index, const T& value) {
             if (index >= 0 && index < this->range) {
                 this->content[index] = value;
                 return true;
@@ -193,7 +193,7 @@ template <typename T> class DynamicHandler {
 
             @return content size
         */
-        unsigned int size(void) {
+        inline unsigned int size(void) const {
             return this->range;
         }
 
@@ -203,7 +203,7 @@ template <typename T> class DynamicHandler {
             @param value to be stored
             @return success value
         */
-        bool push_back(T value) {
+        bool push_back(const T& value) {
             if (expandBy(1) && set(this->range - 1, value)) {
                 return true;
             } else {
@@ -219,7 +219,7 @@ template <typename T> class DynamicHandler {
         */
         bool insert(DynamicHandler<T> insertion) {
             if (insertion.size() > 0) {
-                for (uint64_t i = 0; i < insertion.size(); i++) {
+                for (unsigned int i = 0; i < insertion.size(); i++) {
                     push_back(insertion.get(i));
                 }
                 return true;
@@ -234,7 +234,7 @@ template <typename T> class DynamicHandler {
             @param value to be stored
             @return success value
         */
-        bool push_front(T value) {
+        bool push_front(const T& value) {
             T *replacement = new T[this->range + 1];
             for (unsigned int i = 0; i < this->range; i++) {
                 replacement[i + 1] = this->content[i];
@@ -258,7 +258,7 @@ template <typename T> class DynamicHandler {
             @param end ending index
             @return success value
         */
-        bool extract(T target[], unsigned int begin, unsigned int end) {
+        bool extract(T target[], const unsigned int& begin, const unsigned int& end) {
             if (begin >= 0 && end <= this->range && begin <= end) {
                 for (unsigned int i = begin; i < end; i++) {
                     target[i] = this->content[i];
@@ -275,7 +275,7 @@ template <typename T> class DynamicHandler {
             @param index index
             @return object at index
         */
-        T& operator[](unsigned int index) {
+        T& operator[](const unsigned int& index) {
             if (index >= 0 && index < this->range) {
                 return this->content[index];
             } else {
@@ -298,7 +298,7 @@ template <typename T> class DynamicHandler {
         /**
             Reset iterator to 0
         */
-        void iter_reset(void) {
+        inline void iter_reset(void) {
             this->iterator = 0;
         }
 
@@ -308,7 +308,7 @@ template <typename T> class DynamicHandler {
             @param iterator_new new index
             @return success value
         */
-        bool iter_set(int iterator_new) {
+        bool iter_set(const int& iterator_new) {
             if (iterator_new > -1 && iterator_new < this->range) {
                 this->iterator = iterator_new;
                 return true;
@@ -323,14 +323,14 @@ template <typename T> class DynamicHandler {
             @param iteratorSetting what to do with internal iterator
             @return object at index
         */
-        T& iter_current(ITERATOR_W iteratorSetting) {
+        T& iter_current(const ITERATOR_W& iteratorSetting) {
             int iterator_old = this->iterator;
             int iterator_new = this->iterator + (int) iteratorSetting;
-            if (iterator_new > -1 && iterator_new < this->range) {
+            if (iterator_new > -1 && iterator_new < (int) this->range) {
                 this->iterator = iterator_new;
             } else if (iterator_new < 0) {
-                this->iterator = this->range - 1;
-            } else if (iterator_new > this->range - 1){
+                this->iterator = (int) this->range - 1;
+            } else if (iterator_new > (int) this->range - 1){
                 this->iterator = 0;
             }
             return this->content[iterator_old];
@@ -341,7 +341,7 @@ template <typename T> class DynamicHandler {
 
             @return index in iterator
         */
-        int iter_at(void) {
+        inline int iter_at(void) const {
             return this->iterator;
         }
 };
@@ -352,9 +352,14 @@ template <typename T> class DynamicHandler {
     @param Training.distance Distance of training
     @param Training.duration Duration of training
 */
-typedef struct {
+struct Training {
     double distance, duration;
-} Training;
+    Training(){}
+    Training(const double& distance, const double &duration) {
+        this->distance = distance;
+        this->duration = duration;
+    }
+};
 
 /**
     Structure with cyclist's name and training sessions
@@ -362,22 +367,24 @@ typedef struct {
     @param Cyclist.name Name of cyclist
     @param Cyclist.trains DynamicHandler with training sessions
 */
-typedef struct {
+struct Cyclist {
     std::string name;
     DynamicHandler<Training> trains;
-} Cyclist;
+    Cyclist(){}
+    Cyclist(const std::string& name) {
+        this->name = name;
+    }
+};
 
 void sort(DynamicHandler<Cyclist>& cyclists);
-bool readFile(DynamicHandler<Cyclist> &database, std::string source);
-bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target);
-unsigned int getUniqueCyclists(std::string source);
-unsigned int getCyclistsTrainings(Cyclist c, std::string source);
-double getTotalDistance(Cyclist c);
-double getTotalDuration(Cyclist c);
-double getAverageDistance(Cyclist c);
-double getAverageDuration(Cyclist c);
-Training newTraining(double distance, double duration);
-Cyclist newCyclist(std::string name);
+bool readFile(DynamicHandler<Cyclist> &database, const std::string& source);
+bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target);
+unsigned int getUniqueCyclists(const std::string& source);
+unsigned int getCyclistsTrainings(const Cyclist& c, const std::string& source);
+double getTotalDistance(Cyclist& c);
+double getTotalDuration(Cyclist& c);
+double getAverageDistance(Cyclist& c);
+double getAverageDuration(Cyclist& c);
 
 int main()
 {
@@ -418,38 +425,12 @@ int main()
 }
 
 /**
-    Creates new instance of Training structure
-
-    @param distance of training
-    @param duration of training
-    @return Training
-*/
-Training newTraining(double distance, double duration) {
-    Training f;
-    f.distance = distance;
-    f.duration = duration;
-    return f;
-}
-
-/**
-    Creates new instance of Cyclist structure
-
-    @param name of cyclist
-    @return Cyclist
-*/
-Cyclist newCyclist(std::string name) {
-    Cyclist c;
-    c.name = name;
-    return c;
-}
-
-/**
         Return average duration of cyclists training
 
         @param c cyclist measured
         @return average duration
 */
-double getAverageDuration(Cyclist c) {
+double getAverageDuration(Cyclist& c) {
     return getTotalDuration(c) / c.trains.size();
 }
 
@@ -459,7 +440,7 @@ double getAverageDuration(Cyclist c) {
         @param c cyclist measured
         @return average distance
 */
-double getAverageDistance(Cyclist c) {
+double getAverageDistance(Cyclist& c) {
     return getTotalDistance(c) / c.trains.size();
 }
 
@@ -469,7 +450,7 @@ double getAverageDistance(Cyclist c) {
         @param c cyclist measured
         @return total duration
 */
-double getTotalDuration(Cyclist c) {
+double getTotalDuration(Cyclist& c) {
     double total = 0;
     for (unsigned int i = 0; i < c.trains.size(); i++) {
         total += c.trains[i].duration;
@@ -483,7 +464,7 @@ double getTotalDuration(Cyclist c) {
         @param c cyclist measured
         @return total distance
 */
-double getTotalDistance(Cyclist c) {
+double getTotalDistance(Cyclist& c) {
     double total = 0;
     for (unsigned int i = 0; i < c.trains.size(); i++) {
         total += c.trains[i].distance;
@@ -498,7 +479,7 @@ double getTotalDistance(Cyclist c) {
         @param source path to file
         @return success value
 */
-bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
+bool readFile(DynamicHandler<Cyclist> &database, const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         DynamicHandler<std::string> temporary(3);
@@ -520,15 +501,15 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
             train_duration = strtod(temporary[2].c_str(), NULL);
             for (unsigned int i = 0; i < database.size() && !exists; i++) {
                 if (database[i].name == temporary[0]) {
-                    database[i].trains.iter_current(DynamicHandler<Training>::INCREASE) = newTraining(train_distance, train_duration);
+                    database[i].trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
                     exists = true;
                 }
             }
             if (!exists) {
-                Cyclist c = newCyclist(temporary[0]);
+                Cyclist c = Cyclist(temporary[0]);
                 database.iter_current(database.IGNORE) = c;
                 database.iter_current(database.IGNORE).trains.expand(getCyclistsTrainings(c, source));
-                database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = newTraining(train_distance, train_duration);
+                database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
             }
 
         }
@@ -547,7 +528,7 @@ bool readFile(DynamicHandler<Cyclist> &database, std::string source) {
     @param target path where output file should be
     @return success value
 */
-bool outputHtml(DynamicHandler<Cyclist> &cyclists, std::string target) {
+bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
     std::fstream file (target.c_str(), std::ios::out | std::ios::trunc);
     if (file.is_open()) {
         file << "<html>" << std::endl << "<head>" << std::endl << "<meta http-equiv=\"Content-Type\" content=\"test/html;charset=utf-8\">" << std::endl;
@@ -605,7 +586,7 @@ void sort(DynamicHandler<Cyclist>& cyclists) {
     @param source path to file
     @return amount of cyclists
 */
-unsigned int getUniqueCyclists(std::string source) {
+unsigned int getUniqueCyclists(const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     unsigned int count = 0;
     if (file.is_open()) {
@@ -629,7 +610,7 @@ unsigned int getUniqueCyclists(std::string source) {
     @param source path to file
     @return amount of trainings
 */
-unsigned int getCyclistsTrainings(Cyclist c, std::string source) {
+unsigned int getCyclistsTrainings(const Cyclist& c, const std::string& source) {
     unsigned int count = 0;
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
