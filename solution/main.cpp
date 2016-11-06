@@ -15,7 +15,7 @@ template <typename T> class DynamicHandler {
     private:
         T *content;
         unsigned int range;
-        int iterator;
+        int internal_iterator;
 
         /**
             Releases heap memory when size is greater than 0
@@ -299,7 +299,7 @@ template <typename T> class DynamicHandler {
             Reset iterator to 0
         */
         inline void iter_reset(void) {
-            this->iterator = 0;
+            this->internal_iterator = 0;
         }
 
         /**
@@ -310,7 +310,7 @@ template <typename T> class DynamicHandler {
         */
         bool iter_set(int iterator_new) {
             if (iterator_new > -1 && iterator_new < this->range) {
-                this->iterator = iterator_new;
+                this->internal_iterator = iterator_new;
                 return true;
             } else {
                 return false;
@@ -324,16 +324,25 @@ template <typename T> class DynamicHandler {
             @return object at index
         */
         T& iter_current(ITERATOR_W iteratorSetting) {
-            int iterator_old = this->iterator;
-            int iterator_new = this->iterator + (int) iteratorSetting;
+            int iterator_old = this->internal_iterator;
+            int iterator_new = this->internal_iterator + (int) iteratorSetting;
             if (iterator_new > -1 && iterator_new < (int) this->range) {
-                this->iterator = iterator_new;
+                this->internal_iterator = iterator_new;
             } else if (iterator_new < 0) {
-                this->iterator = (int) this->range - 1;
+                this->internal_iterator = (int) this->range - 1;
             } else if (iterator_new > (int) this->range - 1){
-                this->iterator = 0;
+                this->internal_iterator = 0;
             }
             return this->content[iterator_old];
+        }
+
+        /**
+            Return object at iterator point, leaves internal iterator as it was before call
+
+            @return object at index
+        */
+        T& iter_current(void) {
+            return iter_current(IGNORE);
         }
 
         /**
@@ -342,7 +351,7 @@ template <typename T> class DynamicHandler {
             @return index in iterator
         */
         inline int iter_at(void) {
-            return this->iterator;
+            return this->internal_iterator;
         }
 };
 
@@ -477,8 +486,8 @@ void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB);
 void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex);
 bool readFile(DynamicHandler<Cyclist> &database, const std::string& source);
 bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target);
-unsigned int getUniqueCyclists(const std::string& source);
-unsigned int getCyclistsTrainings(const Cyclist& c, const std::string& source);
+unsigned int sumOfCyclists(const std::string& source);
+unsigned int sumOfTrainings(const Cyclist& c, const std::string& source);
 
 int main()
 {
@@ -529,8 +538,7 @@ bool readFile(DynamicHandler<Cyclist> &database, const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         DynamicHandler<std::string> temporary(3);
-        database.expand(getUniqueCyclists(source));
-        database.iter_reset();
+        database.expand(sumOfCyclists(source));
         std::string temp;
         while (std::getline(file, temp)) {
             temporary.iter_reset();
@@ -552,9 +560,8 @@ bool readFile(DynamicHandler<Cyclist> &database, const std::string& source) {
                 }
             }
             if (!exists) {
-                Cyclist c = Cyclist(temporary[0]);
-                database.iter_current(database.IGNORE) = c;
-                database.iter_current(database.IGNORE).trains.expand(getCyclistsTrainings(c, source));
+                database.iter_current() = Cyclist(temporary[0]);
+                database.iter_current().trains.expand(sumOfTrainings(database[database.iter_at()], source));
                 database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
             }
 
@@ -583,7 +590,7 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
         file << "<caption>Statistika cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Celkovy cas na kole [h]</th><th>Prumerna ujeta vzdalenost [km]</th><th>Prumerny cas na kole [h]</th></tr>" << std::endl;
         for (unsigned int i = 0; i < cyclists.size(); i++) {
-            file << "<tr><th>" << cyclists[i].name << "</th><th>" << cyclists[i].getTotalDistance() << "</th><th>" << cyclists[i].getTotalDuration() << "</th><th>" << cyclists[i].getAverageDistance() << "</th><th>" << cyclists[i].getAverageDuration() << "</th></tr>" << std::endl;
+            file << "<tr><th>" << cyclists[i].name << "</th><td>" << cyclists[i].getTotalDistance() << "</td><td>" << cyclists[i].getTotalDuration() << "</td><td>" << cyclists[i].getAverageDistance() << "</td><td>" << cyclists[i].getAverageDuration() << "</td></tr>" << std::endl;
         }
         file << "</table>" << std::endl;
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
@@ -645,7 +652,7 @@ void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB) {
     @param source path to file
     @return amount of cyclists
 */
-unsigned int getUniqueCyclists(const std::string& source) {
+unsigned int sumOfCyclists(const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     unsigned int count = 0;
     if (file.is_open()) {
@@ -669,7 +676,7 @@ unsigned int getUniqueCyclists(const std::string& source) {
     @param source path to file
     @return amount of trainings
 */
-unsigned int getCyclistsTrainings(const Cyclist& c, const std::string& source) {
+unsigned int sumOfTrainings(const Cyclist& c, const std::string& source) {
     unsigned int count = 0;
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
