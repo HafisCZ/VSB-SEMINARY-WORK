@@ -354,8 +354,19 @@ template <typename T> class DynamicHandler {
 */
 struct Training {
     double distance, duration;
+
+    /**
+        Default constructor
+    */
     Training(){}
-    Training(const double& distance, const double &duration) {
+
+    /**
+        Constructor
+
+        @param distance distance of training
+        @param duration duration of training
+    */
+    Training(double distance, double duration) {
         this->distance = distance;
         this->duration = duration;
     }
@@ -368,23 +379,106 @@ struct Training {
     @param Cyclist.trains DynamicHandler with training sessions
 */
 struct Cyclist {
-    std::string name;
-    DynamicHandler<Training> trains;
-    Cyclist(){}
-    Cyclist(const std::string& name) {
-        this->name = name;
-    }
+    private:
+        int lastDistanceCheck, lastDurationCheck;
+        double totalDistance, totalDuration;
+
+        /**
+            Set all internal counters/values
+        */
+        void preset(void) {
+            this->totalDistance = 0;
+            this->totalDuration = 0;
+            this->lastDistanceCheck = -1;
+            this->lastDurationCheck = -1;
+        }
+    public:
+        std::string name;
+        DynamicHandler<Training> trains;
+
+        /**
+            Default constructor
+        */
+        Cyclist(void) {
+            preset();
+        }
+
+        /**
+            Constructor
+
+            @param name Name of cyclist
+        */
+        Cyclist(const std::string& name){
+            preset();
+            this->name = name;
+        }
+
+        /**
+            Total training distance
+
+            @return total distance
+        */
+        double getTotalDistance(void) {
+            if (this->lastDistanceCheck != (int) trains.size()) {
+                this->totalDistance = 0;
+                for (unsigned int i = 0; i < trains.size(); i++) {
+                    this->totalDistance += trains[i].distance;
+                }
+                this->lastDistanceCheck = trains.size();
+            }
+            return this->totalDistance;
+        }
+
+        /**
+            Total training duration
+
+            @return total duration
+        */
+        double getTotalDuration(void) {
+            if (this->lastDurationCheck != (int) trains.size()) {
+                this->totalDuration = 0;
+                for (unsigned int i = 0; i < trains.size(); i++) {
+                    this->totalDuration += trains[i].duration;
+                }
+                this->lastDurationCheck = trains.size();
+            }
+            return this->totalDuration;
+        }
+
+        /**
+            Average training distance
+
+            @return average distance
+        */
+        double getAverageDistance(void) {
+            if (trains.size() > 0) {
+                return (getTotalDistance() / this->lastDistanceCheck);
+            } else {
+                return 0;
+            }
+        }
+
+        /**
+            Average training duration
+
+            @return average duration
+        */
+        double getAverageDuration(void) {
+            if (trains.size() > 0) {
+                return (getTotalDuration() / this->lastDurationCheck);
+            } else {
+                return 0;
+            }
+        }
 };
 
 void sort(DynamicHandler<Cyclist>& cyclists);
+void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB);
+void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex);
 bool readFile(DynamicHandler<Cyclist> &database, const std::string& source);
 bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target);
 unsigned int getUniqueCyclists(const std::string& source);
 unsigned int getCyclistsTrainings(const Cyclist& c, const std::string& source);
-double getTotalDistance(Cyclist& c);
-double getTotalDuration(Cyclist& c);
-double getAverageDistance(Cyclist& c);
-double getAverageDuration(Cyclist& c);
 
 int main()
 {
@@ -397,7 +491,7 @@ int main()
         std::cout << "Soubor nenalezen!" << std::endl;
         return 2;
     } else {
-        sort(cyclists);
+        sortQuick(cyclists, 0, cyclists.size());
     }
 
     std::cout << "[EXPORT] Zadejte cestu: ";
@@ -409,7 +503,7 @@ int main()
     std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
     for (unsigned int i = 0; i < cyclists.size(); i++) {
         Cyclist sub = cyclists[i];
-        std::cout << std::endl << sub.name << std::endl << "\tPocet: " << sub.trains.size() << "\tCelkem: " << getTotalDistance(sub) << "km / " << getTotalDuration(sub) << "h\tPrumer: " << getAverageDistance(sub) << "hm / " << getAverageDuration(sub) << "h" << std::endl;
+        std::cout << std::endl << sub.name << std::endl << "\tPocet: " << sub.trains.size() << "\tCelkem: " << sub.getTotalDistance() << "km / " << sub.getTotalDuration() << "h\tPrumer: " << sub.getAverageDistance() << "hm / " << sub.getAverageDuration() << "h" << std::endl;
         for (unsigned int j = 0; j < sub.trains.size(); j++) {
             std::cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains[j].distance << "km / " << sub.trains[j].duration << "h" << std::endl;
         }
@@ -422,54 +516,6 @@ int main()
         }
     }
     return 0;
-}
-
-/**
-        Return average duration of cyclists training
-
-        @param c cyclist measured
-        @return average duration
-*/
-double getAverageDuration(Cyclist& c) {
-    return getTotalDuration(c) / c.trains.size();
-}
-
-/**
-        Return average distance of cyclist
-
-        @param c cyclist measured
-        @return average distance
-*/
-double getAverageDistance(Cyclist& c) {
-    return getTotalDistance(c) / c.trains.size();
-}
-
-/**
-        Return total duration of cyclists training
-
-        @param c cyclist measured
-        @return total duration
-*/
-double getTotalDuration(Cyclist& c) {
-    double total = 0;
-    for (unsigned int i = 0; i < c.trains.size(); i++) {
-        total += c.trains[i].duration;
-    }
-    return total;
-}
-
-/**
-        Return total distance of cyclist
-
-        @param c cyclist measured
-        @return total distance
-*/
-double getTotalDistance(Cyclist& c) {
-    double total = 0;
-    for (unsigned int i = 0; i < c.trains.size(); i++) {
-        total += c.trains[i].distance;
-    }
-    return total;
 }
 
 /**
@@ -537,14 +583,14 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
         file << "<caption>Statistika cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Celkovy cas na kole [h]</th><th>Prumerna ujeta vzdalenost [km]</th><th>Prumerny cas na kole [h]</th></tr>" << std::endl;
         for (unsigned int i = 0; i < cyclists.size(); i++) {
-            file << "<tr><th>" << cyclists[i].name << "</th><th>" << getTotalDistance(cyclists[i]) << "</th><th>" << getTotalDuration(cyclists[i]) << "</th><th>" << getAverageDistance(cyclists[i]) << "</th><th>" << getAverageDuration(cyclists[i]) << "</th></tr>" << std::endl;
+            file << "<tr><th>" << cyclists[i].name << "</th><th>" << cyclists[i].getTotalDistance() << "</th><th>" << cyclists[i].getTotalDuration() << "</th><th>" << cyclists[i].getAverageDistance() << "</th><th>" << cyclists[i].getAverageDuration() << "</th></tr>" << std::endl;
         }
         file << "</table>" << std::endl;
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
         file << "<caption>Treninky cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Cas treninku [h]</th></tr>" << std::endl;
         for (unsigned int i = 0; i < cyclists.size(); i++) {
-            file << "<tr><td rowspan=" << cyclists[i].trains.size() + 1 << ">" << cyclists[i].name << "</td><td>Prumer: " << getAverageDistance(cyclists[i]) << "</td><td>Prumer: " << getAverageDuration(cyclists[i]) << "</td></tr>" << std::endl;
+            file << "<tr><td rowspan=" << cyclists[i].trains.size() + 1 << ">" << cyclists[i].name << "</td><td>Prumer: " << cyclists[i].getAverageDistance() << "</td><td>Prumer: " << cyclists[i].getAverageDuration() << "</td></tr>" << std::endl;
             for (unsigned int j = 0; j < cyclists[i].trains.size(); j++) {
                 file << "<tr><td>" << cyclists[i].trains[j].distance << "</td><td>" << cyclists[i].trains[j].duration << "</td></tr>" << std::endl;
             }
@@ -560,24 +606,37 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
 }
 
 /**
-    Sorts content of DynamicHandler of Cyclists by total time
+    Quick sort method for DynamicHandler of Cyclist
 
-    @param cyclists DynamicHandler of cyclists
+    @param cyclists DynamicHandler of Cyclist
+    @param zeroIndex lowest index
+    @param aboveIndex size of DynamicHandler
 */
-void sort(DynamicHandler<Cyclist>& cyclists) {
-    Cyclist temporary;
-    bool sortFlag = true;
-    for (unsigned int i = 1; i <= cyclists.size() && sortFlag; i++) {
-        sortFlag = false;
-        for (unsigned int j = 0; j < cyclists.size() - 1; j++) {
-            if (getTotalDuration(cyclists[j + 1]) > getTotalDuration(cyclists[j])) {
-                temporary = cyclists[j];
-                cyclists[j] = cyclists[j + 1];
-                cyclists[j + 1] = temporary;
-                sortFlag = true;
+void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex) {
+    if (zeroIndex < aboveIndex) {
+        int betweenIndex = zeroIndex;
+        for (int i = zeroIndex + 1; i < aboveIndex; i++) {
+            if (cyclists[i].getTotalDuration() > cyclists[zeroIndex].getTotalDuration()) {
+                sortSwap(cyclists, i, ++betweenIndex);
             }
         }
+        sortSwap(cyclists, zeroIndex, betweenIndex);
+        sortQuick(cyclists, zeroIndex, betweenIndex);
+        sortQuick(cyclists, betweenIndex + 1, aboveIndex);
     }
+}
+
+/**
+    Swap two entries in DynamicHandler of Cyclist
+
+    @param cyclists DynamicHandler of Cyclist
+    @param indexA point A
+    @param indexB point B
+*/
+void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB) {
+    Cyclist temporary = cyclists[indexB];
+    cyclists[indexB] = cyclists[indexA];
+    cyclists[indexA] = temporary;
 }
 
 /**
