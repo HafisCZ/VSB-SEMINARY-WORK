@@ -41,7 +41,7 @@ template <typename T> class DynamicHandler {
 
             @param range of storage
         */
-        DynamicHandler(const unsigned int& range) {
+        DynamicHandler(unsigned int range) {
             if (range > 0) {
                 this->range = range;
                 this->content = new T[this->range];
@@ -57,7 +57,7 @@ template <typename T> class DynamicHandler {
             @param range of new storage
             @return success value
         */
-        bool expand(const unsigned int& range) {
+        bool expand(unsigned int range) {
             if (range > this->range) {
                 T *replacement = new T[range];
                 for (unsigned int i = 0; i < this->range; i++) {
@@ -80,7 +80,7 @@ template <typename T> class DynamicHandler {
             @param range modifier of new storage
             @return success value
         */
-        bool expandBy(const unsigned int& range) {
+        bool expandBy(unsigned int range) {
             if (range > 0) {
                 return expand(range + this->range);
             } else {
@@ -94,7 +94,7 @@ template <typename T> class DynamicHandler {
             @param index of element
             @return success value
         */
-        bool remove(const unsigned int& index) {
+        bool remove(unsigned int index) {
             if (index >= 0 && index < this->range) {
                 T* replacement = new T[this->range - 1];
                 for (unsigned int i = 0; i < this->range; i++) {
@@ -121,7 +121,7 @@ template <typename T> class DynamicHandler {
             @param range of new storage
             @return success value
         */
-        bool shrink(const unsigned int& range) {
+        bool shrink(unsigned int range) {
             if (range < this->range) {
                 T* replacement = new T[range];
                 for (unsigned int i = 0; i < range; i++) {
@@ -144,7 +144,7 @@ template <typename T> class DynamicHandler {
             @param range modifier of new storage
             @return success value
         */
-        bool shrinkBy(const unsigned int& range) {
+        bool shrinkBy(unsigned int range) {
             if (range > 0) {
                 return shrink(this->range - range);
             } else {
@@ -179,7 +179,7 @@ template <typename T> class DynamicHandler {
             @param value to be stored
             @return success value
         */
-        bool set(const unsigned int& index, const T& value) {
+        bool set(unsigned int index, const T& value) {
             if (index >= 0 && index < this->range) {
                 this->content[index] = value;
                 return true;
@@ -193,7 +193,7 @@ template <typename T> class DynamicHandler {
 
             @return content size
         */
-        inline unsigned int size(void) const {
+        inline unsigned int size(void) {
             return this->range;
         }
 
@@ -217,7 +217,7 @@ template <typename T> class DynamicHandler {
             @param insertion DynamicHandler to be inserted
             @return success value
         */
-        bool insert(DynamicHandler<T> insertion) {
+        bool insert(const DynamicHandler<T>& insertion) {
             if (insertion.size() > 0) {
                 for (unsigned int i = 0; i < insertion.size(); i++) {
                     push_back(insertion.get(i));
@@ -258,7 +258,7 @@ template <typename T> class DynamicHandler {
             @param end ending index
             @return success value
         */
-        bool extract(T target[], const unsigned int& begin, const unsigned int& end) {
+        bool extract(T target[], unsigned int begin, unsigned int end) {
             if (begin >= 0 && end <= this->range && begin <= end) {
                 for (unsigned int i = begin; i < end; i++) {
                     target[i] = this->content[i];
@@ -275,7 +275,7 @@ template <typename T> class DynamicHandler {
             @param index index
             @return object at index
         */
-        T& operator[](const unsigned int& index) {
+        T& operator[](unsigned int index) {
             if (index >= 0 && index < this->range) {
                 return this->content[index];
             } else {
@@ -308,7 +308,7 @@ template <typename T> class DynamicHandler {
             @param iterator_new new index
             @return success value
         */
-        bool iter_set(const int& iterator_new) {
+        bool iter_set(int iterator_new) {
             if (iterator_new > -1 && iterator_new < this->range) {
                 this->iterator = iterator_new;
                 return true;
@@ -323,7 +323,7 @@ template <typename T> class DynamicHandler {
             @param iteratorSetting what to do with internal iterator
             @return object at index
         */
-        T& iter_current(const ITERATOR_W& iteratorSetting) {
+        T& iter_current(ITERATOR_W iteratorSetting) {
             int iterator_old = this->iterator;
             int iterator_new = this->iterator + (int) iteratorSetting;
             if (iterator_new > -1 && iterator_new < (int) this->range) {
@@ -341,7 +341,7 @@ template <typename T> class DynamicHandler {
 
             @return index in iterator
         */
-        inline int iter_at(void) const {
+        inline int iter_at(void) {
             return this->iterator;
         }
 };
