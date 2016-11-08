@@ -1,0 +1,166 @@
+bool push_back(const T& value); /// @unused
+bool insert(const DynamicHandler<T>& insertion); /// @unused
+bool push_front(const T& value); /// @unused
+bool remove(unsigned int index); /// @unused
+bool shrink(unsigned int range); /// @unused
+bool shrinkBy(unsigned int range); /// @unused
+void prefill(const T& value); /// @unused
+bool extract(T target[], unsigned int begin, unsigned int end); /// @unused
+
+/**
+    Operator + overload, return DynamicHandler
+
+    @param insertion which should be joined
+    @return DynamicHandler
+*/
+DynamicHandler<T>& operator+(const T& insertion) { /// @unused
+    push_back(insertion);
+    return *this;
+}
+
+/**
+    Removes element from storage
+
+    @param index of element
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::remove(unsigned int index) {
+    if (index >= 0 && index < this->range) {
+        T* replacement = new T[this->range - 1];
+        for (unsigned int i = 0; i < this->range; i++) {
+            if (i == index) {
+                continue;
+            } else {
+                replacement[(i > index ? i : i - 1)] = this->content[i];
+            }
+        }
+        dealloc();
+        this->content = replacement;
+        this->range -= 1;
+        replacement = NULL;
+        iter_reset();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Shrinks storage
+
+    @param range of new storage
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::shrink(unsigned int range) {
+    if (range < this->range) {
+        T* replacement = new T[range];
+        for (unsigned int i = 0; i < range; i++) {
+            replacement[i] = this->content[i];
+        }
+        dealloc();
+        this->content = replacement;
+        this->range = range;
+        replacement = NULL;
+        iter_reset();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Shrinks storage by
+
+    @param range modifier of new storage
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::shrinkBy(unsigned int range) {
+    if (range > 0) {
+        return shrink(this->range - range);
+    } else {
+        return false;
+    }
+}
+
+/**
+    Sets each value in content
+
+    @param value being set
+*/
+template <typename T> void DynamicHandler<T>::prefill(const T& value) {
+    for (unsigned int i = 0; i < this->range; i++) {
+        this->content[i] = value;
+    }
+}
+
+/**
+    Push value to back of content, expands storage by 1
+
+    @param value to be stored
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::push_back(const T& value) {
+    if (expandBy(1) && set(this->range - 1, value)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Push whole DynamicHandler into another DynamicHandler
+
+    @param insertion DynamicHandler to be inserted
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::insert(const DynamicHandler<T>& insertion) {
+    if (insertion.size() > 0) {
+        for (unsigned int i = 0; i < insertion.size(); i++) {
+            push_back(insertion.get(i));
+        }
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Push value to front of content, expands storage by 1
+
+    @param value to be stored
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::push_front(const T& value) {
+    T *replacement = new T[this->range + 1];
+    for (unsigned int i = 0; i < this->range; i++) {
+        replacement[i + 1] = this->content[i];
+    }
+    dealloc();
+    this->content = replacement;
+    this->range += 1;
+    replacement = NULL;
+    if (set(0, value)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Extracts specified range of data from content
+
+    @param target[] where to copy
+    @param begin starting index
+    @param end ending index
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::extract(T target[], unsigned int begin, unsigned int end) {
+    if (begin >= 0 && end <= this->range && begin <= end) {
+        for (unsigned int i = begin; i < end; i++) {
+            target[i] = this->content[i];
+        }
+        return true;
+    } else {
+        return false;
+    }
+}

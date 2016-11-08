@@ -28,246 +28,19 @@ template <typename T> class DynamicHandler {
     public:
         enum ITERATOR_W {DECREASE = -1, IGNORE = 0, INCREASE = 1};
 
-        /**
-            Constructor (automatic)
-        */
-        DynamicHandler(void) {
-            this->range = 0;
-            iter_reset();
-        }
+        DynamicHandler(void);
+        DynamicHandler(unsigned int range);
+        void purge(void);
+        void iter_reset(void);
+        bool iter_set(int iterator_new);
+        bool expand(unsigned int range);
+        bool expandBy(unsigned int range);
+        bool set(unsigned int index, const T& value);
+        int iter_at(void);
+        unsigned int size(void);
+        T& iter_current(ITERATOR_W iteratorSetting);
+        T& iter_current(void);
 
-        /**
-            Constructor (initial size specified at initialization)
-
-            @param range of storage
-        */
-        DynamicHandler(unsigned int range) {
-            if (range > 0) {
-                this->range = range;
-                this->content = new T[this->range];
-            } else {
-                this->range = 0;
-            }
-            iter_reset();
-        }
-
-        /**
-            Expands storage
-
-            @param range of new storage
-            @return success value
-        */
-        bool expand(unsigned int range) {
-            if (range > this->range) {
-                T *replacement = new T[range];
-                for (unsigned int i = 0; i < this->range; i++) {
-                    replacement[i] = this->content[i];
-                }
-                dealloc();
-                this->content = replacement;
-                this->range = range;
-                replacement = NULL;
-                iter_reset();
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Shrinks storage by
-
-            @param range modifier of new storage
-            @return success value
-        */
-        bool expandBy(unsigned int range) {
-            if (range > 0) {
-                return expand(range + this->range);
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Removes element from storage
-
-            @param index of element
-            @return success value
-        */
-        bool remove(unsigned int index) {
-            if (index >= 0 && index < this->range) {
-                T* replacement = new T[this->range - 1];
-                for (unsigned int i = 0; i < this->range; i++) {
-                    if (i == index) {
-                        continue;
-                    } else {
-                        replacement[(i > index ? i : i - 1)] = this->content[i];
-                    }
-                }
-                dealloc();
-                this->content = replacement;
-                this->range -= 1;
-                replacement = NULL;
-                iter_reset();
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Shrinks storage
-
-            @param range of new storage
-            @return success value
-        */
-        bool shrink(unsigned int range) {
-            if (range < this->range) {
-                T* replacement = new T[range];
-                for (unsigned int i = 0; i < range; i++) {
-                    replacement[i] = this->content[i];
-                }
-                dealloc();
-                this->content = replacement;
-                this->range = range;
-                replacement = NULL;
-                iter_reset();
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Shrinks storage by
-
-            @param range modifier of new storage
-            @return success value
-        */
-        bool shrinkBy(unsigned int range) {
-            if (range > 0) {
-                return shrink(this->range - range);
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Sets each value in content
-
-            @param value being set
-        */
-        void prefill(const T& value) {
-            for (unsigned int i = 0; i < this->range; i++) {
-                this->content[i] = value;
-            }
-        }
-
-        /**
-            Clear heap memory
-        */
-        void purge(void) {
-            dealloc();
-            this->range = 0;
-            this->content = NULL;
-        }
-
-        /**
-            Set value in storage on index
-
-            @param index where to store
-            @param value to be stored
-            @return success value
-        */
-        bool set(unsigned int index, const T& value) {
-            if (index >= 0 && index < this->range) {
-                this->content[index] = value;
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Get content size
-
-            @return content size
-        */
-        inline unsigned int size(void) {
-            return this->range;
-        }
-
-        /**
-            Push value to back of content, expands storage by 1
-
-            @param value to be stored
-            @return success value
-        */
-        bool push_back(const T& value) {
-            if (expandBy(1) && set(this->range - 1, value)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Push whole DynamicHandler into another DynamicHandler
-
-            @param insertion DynamicHandler to be inserted
-            @return success value
-        */
-        bool insert(const DynamicHandler<T>& insertion) {
-            if (insertion.size() > 0) {
-                for (unsigned int i = 0; i < insertion.size(); i++) {
-                    push_back(insertion.get(i));
-                }
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Push value to front of content, expands storage by 1
-
-            @param value to be stored
-            @return success value
-        */
-        bool push_front(const T& value) {
-            T *replacement = new T[this->range + 1];
-            for (unsigned int i = 0; i < this->range; i++) {
-                replacement[i + 1] = this->content[i];
-            }
-            dealloc();
-            this->content = replacement;
-            this->range += 1;
-            replacement = NULL;
-            if (set(0, value)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Extracts specified range of data from content
-
-            @param target[] where to copy
-            @param begin starting index
-            @param end ending index
-            @return success value
-        */
-        bool extract(T target[], unsigned int begin, unsigned int end) {
-            if (begin >= 0 && end <= this->range && begin <= end) {
-                for (unsigned int i = begin; i < end; i++) {
-                    target[i] = this->content[i];
-                }
-                return true;
-            } else {
-                return false;
-            }
-        }
 
         /**
             Operator [] overload, returns object at index
@@ -283,76 +56,6 @@ template <typename T> class DynamicHandler {
                 return *null;
             }
         }
-
-        /**
-            Operator + overload, return DynamicHandler
-
-            @param insertion which should be joined
-            @return DynamicHandler
-        */
-        DynamicHandler<T>& operator+(const T& insertion) {
-            push_back(insertion);
-            return *this;
-        }
-
-        /**
-            Reset iterator to 0
-        */
-        inline void iter_reset(void) {
-            this->internal_iterator = 0;
-        }
-
-        /**
-            Set iterator to custom value
-
-            @param iterator_new new index
-            @return success value
-        */
-        bool iter_set(int iterator_new) {
-            if (iterator_new > -1 && iterator_new < this->range) {
-                this->internal_iterator = iterator_new;
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        /**
-            Return object at iterator point
-
-            @param iteratorSetting what to do with internal iterator
-            @return object at index
-        */
-        T& iter_current(ITERATOR_W iteratorSetting) {
-            int iterator_old = this->internal_iterator;
-            int iterator_new = this->internal_iterator + (int) iteratorSetting;
-            if (iterator_new > -1 && iterator_new < (int) this->range) {
-                this->internal_iterator = iterator_new;
-            } else if (iterator_new < 0) {
-                this->internal_iterator = (int) this->range - 1;
-            } else if (iterator_new > (int) this->range - 1){
-                this->internal_iterator = 0;
-            }
-            return this->content[iterator_old];
-        }
-
-        /**
-            Return object at iterator point, leaves internal iterator as it was before call
-
-            @return object at index
-        */
-        T& iter_current(void) {
-            return iter_current(IGNORE);
-        }
-
-        /**
-            Return iterator position
-
-            @return index in iterator
-        */
-        inline int iter_at(void) {
-            return this->internal_iterator;
-        }
 };
 
 /**
@@ -364,21 +67,8 @@ template <typename T> class DynamicHandler {
 struct Training {
     double distance, duration;
 
-    /**
-        Default constructor
-    */
     Training(){}
-
-    /**
-        Constructor
-
-        @param distance distance of training
-        @param duration duration of training
-    */
-    Training(double distance, double duration) {
-        this->distance = distance;
-        this->duration = duration;
-    }
+    Training(double distance, double duration);
 };
 
 /**
@@ -405,80 +95,12 @@ struct Cyclist {
         std::string name;
         DynamicHandler<Training> trains;
 
-        /**
-            Default constructor
-        */
-        Cyclist(void) {
-            preset();
-        }
-
-        /**
-            Constructor
-
-            @param name Name of cyclist
-        */
-        Cyclist(const std::string& name){
-            preset();
-            this->name = name;
-        }
-
-        /**
-            Total training distance
-
-            @return total distance
-        */
-        double getTotalDistance(void) {
-            if (this->lastDistanceCheck != (int) trains.size()) {
-                this->totalDistance = 0;
-                for (unsigned int i = 0; i < trains.size(); i++) {
-                    this->totalDistance += trains[i].distance;
-                }
-                this->lastDistanceCheck = trains.size();
-            }
-            return this->totalDistance;
-        }
-
-        /**
-            Total training duration
-
-            @return total duration
-        */
-        double getTotalDuration(void) {
-            if (this->lastDurationCheck != (int) trains.size()) {
-                this->totalDuration = 0;
-                for (unsigned int i = 0; i < trains.size(); i++) {
-                    this->totalDuration += trains[i].duration;
-                }
-                this->lastDurationCheck = trains.size();
-            }
-            return this->totalDuration;
-        }
-
-        /**
-            Average training distance
-
-            @return average distance
-        */
-        double getAverageDistance(void) {
-            if (trains.size() > 0) {
-                return (getTotalDistance() / this->lastDistanceCheck);
-            } else {
-                return 0;
-            }
-        }
-
-        /**
-            Average training duration
-
-            @return average duration
-        */
-        double getAverageDuration(void) {
-            if (trains.size() > 0) {
-                return (getTotalDuration() / this->lastDurationCheck);
-            } else {
-                return 0;
-            }
-        }
+        Cyclist(void);
+        Cyclist(const std::string& name);
+        double getTotalDistance(void);
+        double getTotalDuration(void);
+        double getAverageDistance(void);
+        double getAverageDuration(void);
 };
 
 void sort(DynamicHandler<Cyclist>& cyclists);
@@ -512,9 +134,9 @@ int main()
     std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
     for (unsigned int i = 0; i < cyclists.size(); i++) {
         Cyclist sub = cyclists[i];
-        std::cout << std::endl << sub.name << std::endl << "\tPocet: " << sub.trains.size() << "\tCelkem: " << sub.getTotalDistance() << "km / " << sub.getTotalDuration() << "h\tPrumer: " << sub.getAverageDistance() << "hm / " << sub.getAverageDuration() << "h" << std::endl;
+        std::cout << std::endl << sub.name << std::endl << "Pocet: " << sub.trains.size() << " Celkem: " << sub.getTotalDistance() << "km / " << sub.getTotalDuration() << "h\tPrumer: " << sub.getAverageDistance() << "hm / " << sub.getAverageDuration() << "h" << std::endl;
         for (unsigned int j = 0; j < sub.trains.size(); j++) {
-            std::cout << " - Trenink " << j + 1 << "\tUjeto: " << sub.trains[j].distance << "km / " << sub.trains[j].duration << "h" << std::endl;
+            std::cout << " - Trenink " << j + 1 << " Ujeto: " << sub.trains[j].distance << "km / " << sub.trains[j].duration << "h" << std::endl;
         }
         sub.trains.purge();
         if (i == cyclists.size() - 1) {
@@ -647,6 +269,92 @@ void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB) {
 }
 
 /**
+    Training constructor
+
+    @param distance distance of training
+    @param duration duration of training
+*/
+Training::Training(double distance, double duration) {
+    this->distance = distance;
+    this->duration = duration;
+}
+
+/**
+    Default Cyclist constructor
+*/
+Cyclist::Cyclist(void) {
+    preset();
+}
+
+/**
+    Cyclist constructor
+
+    @param name Name of cyclist
+*/
+Cyclist::Cyclist(const std::string& name){
+    preset();
+    this->name = name;
+}
+
+/**
+    Total training distance
+
+    @return total distance
+*/
+double Cyclist::getTotalDistance(void) {
+    if (this->lastDistanceCheck != (int) trains.size()) {
+        this->totalDistance = 0;
+        for (unsigned int i = 0; i < trains.size(); i++) {
+            this->totalDistance += trains[i].distance;
+        }
+        this->lastDistanceCheck = trains.size();
+    }
+    return this->totalDistance;
+}
+
+/**
+    Total training duration
+
+    @return total duration
+*/
+double Cyclist::getTotalDuration(void) {
+    if (this->lastDurationCheck != (int) trains.size()) {
+        this->totalDuration = 0;
+        for (unsigned int i = 0; i < trains.size(); i++) {
+            this->totalDuration += trains[i].duration;
+        }
+        this->lastDurationCheck = trains.size();
+    }
+    return this->totalDuration;
+}
+
+/**
+    Average training distance
+
+    @return average distance
+*/
+double Cyclist::getAverageDistance(void) {
+    if (trains.size() > 0) {
+        return (getTotalDistance() / this->lastDistanceCheck);
+    } else {
+        return 0;
+    }
+}
+
+/**
+    Average training duration
+
+    @return average duration
+*/
+double Cyclist::getAverageDuration(void) {
+    if (trains.size() > 0) {
+        return (getTotalDuration() / this->lastDurationCheck);
+    } else {
+        return 0;
+    }
+}
+
+/**
     Get total amount of cyclists
 
     @param source path to file
@@ -689,4 +397,158 @@ unsigned int sumOfTrainings(const Cyclist& c, const std::string& source) {
         file.close();
     }
     return count;
+}
+
+
+/**
+            Constructor (automatic)
+*/
+template <typename T> DynamicHandler<T>::DynamicHandler(void) {
+    this->range = 0;
+    iter_reset();
+}
+
+/**
+    Constructor (initial size specified at initialization)
+
+    @param range of storage
+*/
+template <typename T> DynamicHandler<T>::DynamicHandler(unsigned int range) {
+    if (range > 0) {
+        this->range = range;
+        this->content = new T[this->range];
+    } else {
+        this->range = 0;
+    }
+    iter_reset();
+}
+
+/**
+    Expands storage
+
+    @param range of new storage
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::expand(unsigned int range) {
+    if (range > this->range) {
+        T *replacement = new T[range];
+        for (unsigned int i = 0; i < this->range; i++) {
+            replacement[i] = this->content[i];
+        }
+        dealloc();
+        this->content = replacement;
+        this->range = range;
+        replacement = NULL;
+        iter_reset();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Expands storage by
+
+    @param range modifier of new storage
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::expandBy(unsigned int range) {
+    if (range > 0) {
+        return expand(range + this->range);
+    } else {
+        return false;
+    }
+}
+
+/**
+    Clear heap memory
+*/
+template <typename T> void DynamicHandler<T>::purge(void) {
+    dealloc();
+    this->range = 0;
+    this->content = NULL;
+}
+
+/**
+    Set value in storage on index
+
+    @param index where to store
+    @param value to be stored
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::set(unsigned int index, const T& value) {
+    if (index >= 0 && index < this->range) {
+        this->content[index] = value;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Get content size
+
+    @return content size
+*/
+template <typename T> unsigned int DynamicHandler<T>::size(void) {
+    return this->range;
+}
+
+/**
+    Reset iterator to 0
+*/
+template <typename T> void DynamicHandler<T>::iter_reset(void) {
+    this->internal_iterator = 0;
+}
+
+/**
+    Set iterator to custom value
+
+    @param iterator_new new index
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::iter_set(int iterator_new) {
+    if (iterator_new > -1 && iterator_new < this->range) {
+        this->internal_iterator = iterator_new;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+    Return object at iterator point
+
+    @param iteratorSetting what to do with internal iterator
+    @return object at index
+*/
+template <typename T> T& DynamicHandler<T>::iter_current(ITERATOR_W iteratorSetting) {
+    int iterator_old = this->internal_iterator;
+    int iterator_new = this->internal_iterator + (int) iteratorSetting;
+    if (iterator_new > -1 && iterator_new < (int) this->range) {
+        this->internal_iterator = iterator_new;
+    } else if (iterator_new < 0) {
+        this->internal_iterator = (int) this->range - 1;
+    } else if (iterator_new > (int) this->range - 1){
+        this->internal_iterator = 0;
+    }
+    return this->content[iterator_old];
+}
+
+/**
+    Return object at iterator point, leaves internal iterator as it was before call
+
+    @return object at index
+*/
+template <typename T> T& DynamicHandler<T>::iter_current(void) {
+    return iter_current(IGNORE);
+}
+
+/**
+    Return iterator position
+
+    @return index in iterator
+*/
+template <typename T> int DynamicHandler<T>::iter_at(void) {
+    return this->internal_iterator;
 }
