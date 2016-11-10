@@ -5,7 +5,22 @@ bool remove(unsigned int index); /// @unused
 bool shrink(unsigned int range); /// @unused
 bool shrinkBy(unsigned int range); /// @unused
 void prefill(const T& value); /// @unused
+bool expandBy(unsigned int range); /// @unused
 bool extract(T target[], unsigned int begin, unsigned int end); /// @unused
+
+/**
+    Expands storage by
+
+    @param range modifier of new storage
+    @return success value
+*/
+template <typename T> bool DynamicHandler<T>::expandBy(unsigned int range) {
+    if (range > 0) {
+        return expand(range + this->range);
+    } else {
+        return false;
+    }
+}
 
 /**
     Operator + overload, return DynamicHandler

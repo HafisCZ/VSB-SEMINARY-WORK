@@ -2,6 +2,13 @@
 Thumbs.db
 ehthumbs.db
 
+
+*.exe
+*.depend
+*.o
+*.layout
+
+
 # Folder config file
 Desktop.ini
 

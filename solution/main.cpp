@@ -9,7 +9,7 @@
 /**
     Class for managing heap-stored objects.
 
-    @param T type specifier
+    @param T Object type.
 */
 template <typename T> class DynamicHandler {
     private:
@@ -17,14 +17,7 @@ template <typename T> class DynamicHandler {
         unsigned int range;
         int internal_iterator;
 
-        /**
-            Releases heap memory when size is greater than 0
-        */
-        void dealloc() {
-            if (this->range > 0) {
-                delete[] this->content;
-            }
-        }
+        void dealloc();
     public:
         enum ITERATOR_W {DECREASE = -1, IGNORE = 0, INCREASE = 1};
 
@@ -34,7 +27,6 @@ template <typename T> class DynamicHandler {
         void iter_reset(void);
         bool iter_set(int iterator_new);
         bool expand(unsigned int range);
-        bool expandBy(unsigned int range);
         bool set(unsigned int index, const T& value);
         int iter_at(void);
         unsigned int size(void);
@@ -43,26 +35,27 @@ template <typename T> class DynamicHandler {
 
 
         /**
-            Operator [] overload, returns object at index
+            Operator [] overload, returns object at index.
 
-            @param index index
-            @return object at index
+            @param index Index of object.
+            @return Object at index.
         */
         T& operator[](unsigned int index) {
             if (index >= 0 && index < this->range) {
                 return this->content[index];
-            } else {
-                T* null = NULL;
-                return *null;
+            } else if (this->size() == 0) {
+                expand(1);
             }
+
+            return this->content[0];
         }
 };
 
 /**
-    Structure with training's time and distance
+    Structure with training's time and distance.
 
-    @param Training.distance Distance of training
-    @param Training.duration Duration of training
+    @param Training.distance Distance of training.
+    @param Training.duration Duration of training.
 */
 struct Training {
     double distance, duration;
@@ -72,10 +65,10 @@ struct Training {
 };
 
 /**
-    Structure with cyclist's name and training sessions
+    Structure with cyclist's name and training sessions.
 
-    @param Cyclist.name Name of cyclist
-    @param Cyclist.trains DynamicHandler with training sessions
+    @param Cyclist.name Name of cyclist.
+    @param Cyclist.trains DynamicHandler with training sessions.
 */
 struct Cyclist {
     private:
@@ -83,7 +76,7 @@ struct Cyclist {
         double totalDistance, totalDuration;
 
         /**
-            Set all internal counters/values
+            Set all internal counters/values.
         */
         void preset(void) {
             this->totalDistance = 0;
@@ -150,13 +143,13 @@ int main()
 }
 
 /**
-        Reads specified file and fills DynamicHandler of Cyclist
+        Opens specified file and fills DynamicHandler<Cyclist> with its content.
 
-        @param database DynamicHandler target
-        @param source path to file
-        @return success value
+        @param database DynamicHandler<Cyclist> where to write to.
+        @param source Path to file.
+        @return Success value.
 */
-bool readFile(DynamicHandler<Cyclist> &database, const std::string& source) {
+bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         DynamicHandler<std::string> temporary(3);
@@ -197,11 +190,11 @@ bool readFile(DynamicHandler<Cyclist> &database, const std::string& source) {
 }
 
 /**
-    Writes all information in DynamicHandler with Cyclists into HTML format
+    Opens specific file and writes DynamicHandler<Cyclist> content into structured HTML.
 
-    @param cyclists DynamicHandler of Cyclists
-    @param target path where output file should be
-    @return success value
+    @param cyclists DynamicHandler<Cyclist> what to write from.
+    @param target Path to file.
+    @return Success value.
 */
 bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
     std::fstream file (target.c_str(), std::ios::out | std::ios::trunc);
@@ -235,11 +228,11 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
 }
 
 /**
-    Quick sort method for DynamicHandler of Cyclist
+    Quick sort algorithm, sort by total duration on trainings.
 
-    @param cyclists DynamicHandler of Cyclist
-    @param zeroIndex lowest index
-    @param aboveIndex size of DynamicHandler
+    @param cyclists DynamicHandler<Cyclist> what to sort.
+    @param zeroIndex Lowest index in DynamicHandler<Cyclist>, default 0.
+    @param aboveIndex Maximal + 1 index in DynamicHandler<Cyclist>, can be DynamicHandler<Cyclist>::size() return value.
 */
 void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex) {
     if (zeroIndex < aboveIndex) {
@@ -256,11 +249,11 @@ void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex)
 }
 
 /**
-    Swap two entries in DynamicHandler of Cyclist
+    Swap two objects in DynamicHandler<Cyclist>.
 
-    @param cyclists DynamicHandler of Cyclist
-    @param indexA point A
-    @param indexB point B
+    @param cyclists DynamicHandler<Cyclist> container.
+    @param indexA Index A.
+    @param indexB Index B.
 */
 void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB) {
     Cyclist temporary = cyclists[indexB];
@@ -269,10 +262,10 @@ void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB) {
 }
 
 /**
-    Training constructor
+    Training constructor.
 
-    @param distance distance of training
-    @param duration duration of training
+    @param distance Distance of training.
+    @param duration Duration of training.
 */
 Training::Training(double distance, double duration) {
     this->distance = distance;
@@ -280,16 +273,16 @@ Training::Training(double distance, double duration) {
 }
 
 /**
-    Default Cyclist constructor
+    Default Cyclist constructor.
 */
 Cyclist::Cyclist(void) {
     preset();
 }
 
 /**
-    Cyclist constructor
+    Cyclist constructor.
 
-    @param name Name of cyclist
+    @param name Name of new cyclist.
 */
 Cyclist::Cyclist(const std::string& name){
     preset();
@@ -297,9 +290,9 @@ Cyclist::Cyclist(const std::string& name){
 }
 
 /**
-    Total training distance
+    Total training distance.
 
-    @return total distance
+    @return Total distance of Cyclist.
 */
 double Cyclist::getTotalDistance(void) {
     if (this->lastDistanceCheck != (int) trains.size()) {
@@ -313,9 +306,9 @@ double Cyclist::getTotalDistance(void) {
 }
 
 /**
-    Total training duration
+    Total training duration.
 
-    @return total duration
+    @return Total duration of Cyclist.
 */
 double Cyclist::getTotalDuration(void) {
     if (this->lastDurationCheck != (int) trains.size()) {
@@ -329,9 +322,9 @@ double Cyclist::getTotalDuration(void) {
 }
 
 /**
-    Average training distance
+    Average training distance.
 
-    @return average distance
+    @return Average distance of Cyclist.
 */
 double Cyclist::getAverageDistance(void) {
     if (trains.size() > 0) {
@@ -342,9 +335,9 @@ double Cyclist::getAverageDistance(void) {
 }
 
 /**
-    Average training duration
+    Average training duration.
 
-    @return average duration
+    @return Average duration of Cyclist.
 */
 double Cyclist::getAverageDuration(void) {
     if (trains.size() > 0) {
@@ -355,10 +348,10 @@ double Cyclist::getAverageDuration(void) {
 }
 
 /**
-    Get total amount of cyclists
+    Get amount of Cyclist in certain file.
 
-    @param source path to file
-    @return amount of cyclists
+    @param source Path to file.
+    @return Amount of Cyclist.
 */
 unsigned int sumOfCyclists(const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
@@ -366,7 +359,7 @@ unsigned int sumOfCyclists(const std::string& source) {
     if (file.is_open()) {
         std::string temp, safe = "";
         while (std::getline(file, temp)) {
-            temp = temp.substr(0, temp.find(';'));
+            temp = temp.substr(0, temp.find(';')) + ";";
             if(safe.find(temp) == std::string::npos) {
                 safe += temp;
                 count++;
@@ -378,11 +371,11 @@ unsigned int sumOfCyclists(const std::string& source) {
 }
 
 /**
-    Get total trainings of cyclist in file
+    Get amount of Training for certain Cyclist in certain file.
 
-    @param c cyclist
-    @param source path to file
-    @return amount of trainings
+    @param c Cyclist.
+    @param source Path to file.
+    @return Amount of Cyclist's Training.
 */
 unsigned int sumOfTrainings(const Cyclist& c, const std::string& source) {
     unsigned int count = 0;
@@ -399,9 +392,8 @@ unsigned int sumOfTrainings(const Cyclist& c, const std::string& source) {
     return count;
 }
 
-
 /**
-            Constructor (automatic)
+    Constructor (equivalent to DynamicHandler<T> handler(0)).
 */
 template <typename T> DynamicHandler<T>::DynamicHandler(void) {
     this->range = 0;
@@ -409,9 +401,9 @@ template <typename T> DynamicHandler<T>::DynamicHandler(void) {
 }
 
 /**
-    Constructor (initial size specified at initialization)
+    Constructor.
 
-    @param range of storage
+    @param range Size of DynamicHandler internal storage array.
 */
 template <typename T> DynamicHandler<T>::DynamicHandler(unsigned int range) {
     if (range > 0) {
@@ -424,10 +416,19 @@ template <typename T> DynamicHandler<T>::DynamicHandler(unsigned int range) {
 }
 
 /**
-    Expands storage
+    Releases heap memory when size is greater than 0.
+*/
+template <typename T> void DynamicHandler<T>::dealloc() {
+    if (this->range > 0) {
+        delete[] this->content;
+    }
+}
 
-    @param range of new storage
-    @return success value
+/**
+    Expands DynamicHandler internal storage array to certain size.
+
+    @param range New size of DynamicHandler internal storage array.
+    @return Success value.
 */
 template <typename T> bool DynamicHandler<T>::expand(unsigned int range) {
     if (range > this->range) {
@@ -447,21 +448,7 @@ template <typename T> bool DynamicHandler<T>::expand(unsigned int range) {
 }
 
 /**
-    Expands storage by
-
-    @param range modifier of new storage
-    @return success value
-*/
-template <typename T> bool DynamicHandler<T>::expandBy(unsigned int range) {
-    if (range > 0) {
-        return expand(range + this->range);
-    } else {
-        return false;
-    }
-}
-
-/**
-    Clear heap memory
+    Clear heap memory and set size of DynamicHandler internal storage to 0.
 */
 template <typename T> void DynamicHandler<T>::purge(void) {
     dealloc();
@@ -470,11 +457,11 @@ template <typename T> void DynamicHandler<T>::purge(void) {
 }
 
 /**
-    Set value in storage on index
+    Set value in DynamicHandler on index to.
 
-    @param index where to store
-    @param value to be stored
-    @return success value
+    @param index Index where to store object.
+    @param value Object to be stored.
+    @return Success value.
 */
 template <typename T> bool DynamicHandler<T>::set(unsigned int index, const T& value) {
     if (index >= 0 && index < this->range) {
@@ -486,26 +473,26 @@ template <typename T> bool DynamicHandler<T>::set(unsigned int index, const T& v
 }
 
 /**
-    Get content size
+    Get size of DynamicHandler internal storage.
 
-    @return content size
+    @return Size of DynamicHandler internal storage.
 */
 template <typename T> unsigned int DynamicHandler<T>::size(void) {
     return this->range;
 }
 
 /**
-    Reset iterator to 0
+    Reset pseudo-iterator to 0.
 */
 template <typename T> void DynamicHandler<T>::iter_reset(void) {
     this->internal_iterator = 0;
 }
 
 /**
-    Set iterator to custom value
+    Set pseudo-iterator to user value.
 
-    @param iterator_new new index
-    @return success value
+    @param iterator_new New value of pseudo-iterator.
+    @return Success value.
 */
 template <typename T> bool DynamicHandler<T>::iter_set(int iterator_new) {
     if (iterator_new > -1 && iterator_new < this->range) {
@@ -517,10 +504,10 @@ template <typename T> bool DynamicHandler<T>::iter_set(int iterator_new) {
 }
 
 /**
-    Return object at iterator point
+    Return object at pseudo-iterator index.
 
-    @param iteratorSetting what to do with internal iterator
-    @return object at index
+    @param iteratorSetting Operation to be done with pseudo-iterator.
+    @return Object at index.
 */
 template <typename T> T& DynamicHandler<T>::iter_current(ITERATOR_W iteratorSetting) {
     int iterator_old = this->internal_iterator;
@@ -536,18 +523,18 @@ template <typename T> T& DynamicHandler<T>::iter_current(ITERATOR_W iteratorSett
 }
 
 /**
-    Return object at iterator point, leaves internal iterator as it was before call
+    Return object at pseudo-iterator index (equivalent to DynamicHandler::iter_current(DynamicHandler::IGNORE)).
 
-    @return object at index
+    @return Object at index.
 */
 template <typename T> T& DynamicHandler<T>::iter_current(void) {
     return iter_current(IGNORE);
 }
 
 /**
-    Return iterator position
+    Return value of pseudo-iterator.
 
-    @return index in iterator
+    @return Value of pseudo-iterator.
 */
 template <typename T> int DynamicHandler<T>::iter_at(void) {
     return this->internal_iterator;
