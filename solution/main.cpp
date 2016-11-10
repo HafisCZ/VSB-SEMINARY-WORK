@@ -126,19 +126,23 @@ int main()
 
     std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
     for (unsigned int i = 0; i < cyclists.size(); i++) {
-        Cyclist sub = cyclists[i];
-        std::cout << std::endl << sub.name << std::endl << "Pocet: " << sub.trains.size() << " Celkem: " << sub.getTotalDistance() << "km / " << sub.getTotalDuration() << "h\tPrumer: " << sub.getAverageDistance() << "hm / " << sub.getAverageDuration() << "h" << std::endl;
-        for (unsigned int j = 0; j < sub.trains.size(); j++) {
-            std::cout << " - Trenink " << j + 1 << " Ujeto: " << sub.trains[j].distance << "km / " << sub.trains[j].duration << "h" << std::endl;
+        std::cout << std::endl << cyclists[i].name << std::endl << "Pocet: " << cyclists[i].trains.size() << " Celkem: " << cyclists[i].getTotalDistance() << "km / " << cyclists[i].getTotalDuration() << "h\tPrumer: " << cyclists[i].getAverageDistance() << "hm / " << cyclists[i].getAverageDuration() << "h" << std::endl;
+        for (unsigned int j = 0; j < cyclists[i].trains.size(); j++) {
+            std::cout << " - Trenink " << j + 1 << " Ujeto: " << cyclists[i].trains[j].distance << "km / " << cyclists[i].trains[j].duration << "h" << std::endl;
         }
-        sub.trains.purge();
-        if (i == cyclists.size() - 1) {
-            for (unsigned int j = 0; j < cyclists.size(); j++) {
-                cyclists[i].trains.purge();
-            }
+    }
+
+    for (unsigned int i = 0; i <= cyclists.size(); i++) {
+        if (i < cyclists.size()) {
+            cyclists[i].trains.purge();
+        } else {
             cyclists.purge();
         }
     }
+
+    std::cin.get();
+    std::cin.ignore();
+
     return 0;
 }
 
