@@ -13,26 +13,34 @@
 */
 template <typename T> class DynamicHandler {
     private:
+        /**
+            T type dynamic array (internal storage of DynamicHandler)
+        */
         T *content;
+        /**
+            Amount of T type objects in T dynamic array
+        */
         unsigned int range;
+        /**
+            Internal pseudo-iterator
+        */
         int internal_iterator;
 
         void dealloc();
     public:
-        enum ITERATOR_W {DECREASE = -1, IGNORE = 0, INCREASE = 1};
+        enum ITER_OPERATION {DECREASE = -1, IGNORE = 0, INCREASE = 1};
 
         DynamicHandler(void);
         DynamicHandler(unsigned int range);
         void purge(void);
         void iter_reset(void);
         bool iter_set(int iterator_new);
-        bool expand(unsigned int range);
         bool set(unsigned int index, const T& value);
+        bool resize(unsigned int range, bool keep_data);
         int iter_at(void);
         unsigned int size(void);
-        T& iter_current(ITERATOR_W iteratorSetting);
+        T& iter_current(ITER_OPERATION iteratorSetting);
         T& iter_current(void);
-
 
         /**
             Operator [] overload, returns object at index.
@@ -44,7 +52,7 @@ template <typename T> class DynamicHandler {
             if (index >= 0 && index < this->range) {
                 return this->content[index];
             } else if (this->size() == 0) {
-                expand(1);
+                resize(1, false);
             }
 
             return this->content[0];
@@ -60,7 +68,7 @@ template <typename T> class DynamicHandler {
 struct Training {
     double distance, duration;
 
-    Training(){}
+    Training() : distance(0), duration(0) {}
     Training(double distance, double duration);
 };
 
@@ -157,7 +165,7 @@ bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
         DynamicHandler<std::string> temporary(3);
-        database.expand(sumOfCyclists(source));
+        database.resize(sumOfCyclists(source), false);
         std::string temp;
         while (std::getline(file, temp)) {
             temporary.iter_reset();
@@ -172,6 +180,10 @@ bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
             temporary[2] = temp;
             train_distance = strtod(temporary[1].c_str(), NULL);
             train_duration = strtod(temporary[2].c_str(), NULL);
+            if (train_distance <= 0 || train_duration <= 0 || temporary[2].size() < 1) {
+                std::cout << "[ERR] Zaznam neplatny!" << std::endl;
+                continue;
+            }
             for (unsigned int i = 0; i < database.size() && !exists; i++) {
                 if (database[i].name == temporary[0]) {
                     database[i].trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
@@ -180,13 +192,27 @@ bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
             }
             if (!exists) {
                 database.iter_current() = Cyclist(temporary[0]);
-                database.iter_current().trains.expand(sumOfTrainings(database[database.iter_at()], source));
+                database.iter_current().trains.resize(sumOfTrainings(database[database.iter_at()], source), false);
                 database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
             }
 
         }
         temporary.purge();
         file.close();
+
+        for (unsigned int i = 0; i < database.size(); i++) {
+            if (database[i].trains.size() == 0) {
+                database.resize(i, true);
+                break;
+            } else {
+                for (unsigned int j = 0; j < database[i].trains.size(); j++) {
+                    if (database[i].trains[j].distance <= 0) {
+                        database[i].trains.resize(j, true);
+                        break;
+                    }
+                }
+            }
+        }
         return true;
     } else {
         return false;
@@ -429,25 +455,31 @@ template <typename T> void DynamicHandler<T>::dealloc() {
 }
 
 /**
-    Expands DynamicHandler internal storage array to certain size.
+    Resize DynamicHandler internal storage array to certain size.
 
     @param range New size of DynamicHandler internal storage array.
-    @return Success value.
+    @param keep_data Copy data from old storage array to new one.
+    @return Success value;
 */
-template <typename T> bool DynamicHandler<T>::expand(unsigned int range) {
-    if (range > this->range) {
-        T *replacement = new T[range];
-        for (unsigned int i = 0; i < this->range; i++) {
-            replacement[i] = this->content[i];
+template <typename T> bool DynamicHandler<T>::resize(unsigned int range, bool keep_data) {
+    iter_reset();
+    if (range == this->range || range < 0) {
+        return false;
+    } else if (range == 0) {
+        purge();
+        return true;
+    } else {
+        T* replacement = new T[range];
+        if (keep_data) {
+            for (unsigned int i = 0; i < (range < this->range ? range : this->range); i++) {
+                replacement[i] = this->content[i];
+            }
         }
         dealloc();
         this->content = replacement;
         this->range = range;
         replacement = NULL;
-        iter_reset();
         return true;
-    } else {
-        return false;
     }
 }
 
@@ -513,7 +545,7 @@ template <typename T> bool DynamicHandler<T>::iter_set(int iterator_new) {
     @param iteratorSetting Operation to be done with pseudo-iterator.
     @return Object at index.
 */
-template <typename T> T& DynamicHandler<T>::iter_current(ITERATOR_W iteratorSetting) {
+template <typename T> T& DynamicHandler<T>::iter_current(ITER_OPERATION iteratorSetting) {
     int iterator_old = this->internal_iterator;
     int iterator_new = this->internal_iterator + (int) iteratorSetting;
     if (iterator_new > -1 && iterator_new < (int) this->range) {
