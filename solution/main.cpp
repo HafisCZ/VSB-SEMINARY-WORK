@@ -16,30 +16,31 @@ template <typename T> class HeapArrayInterface {
         /**
             T type dynamic array (internal storage of HeapArrayInterface)
         */
-        T *content;
+        T *content_container;
         /**
             Amount of T type objects in T dynamic array
         */
-        unsigned int range;
+        int container_size;
         /**
             Internal pseudo-iterator
         */
         int internal_iterator;
 
-        void dealloc();
+        void deallocate();
+        bool in_bounds(int index);
     public:
         enum ITER_OPERATION {DECREASE = -1, IGNORE = 0, INCREASE = 1};
 
         HeapArrayInterface(void);
-        HeapArrayInterface(unsigned int range);
+        HeapArrayInterface(int new_size);
         void purge(void);
         void iter_reset(void);
-        bool iter_set(int iterator_new);
-        bool set(unsigned int index, const T& value);
-        bool resize(unsigned int range, bool keep_data);
+        bool iter_set(int iterator_postion);
+        bool set(int index, const T& value);
+        bool resize(int new_size, bool keep_data);
         int iter_at(void);
-        unsigned int size(void);
-        T& iter_current(ITER_OPERATION iteratorSetting);
+        int size(void);
+        T& iter_current(ITER_OPERATION iterator_operation);
         T& iter_current(void);
 
         /**
@@ -49,13 +50,13 @@ template <typename T> class HeapArrayInterface {
             @return Object at index.
         */
         T& operator[](int index) {
-            if (index >= 0 && index < this->range) {
-                return this->content[index];
+            if (in_bounds(index)) {
+                return this->content_container[index];
             } else if (this->size() == 0) {
                 resize(1, false);
             }
 
-            return this->content[0];
+            return this->content_container[0];
         }
 };
 
@@ -132,14 +133,14 @@ int main()
     }
 
     std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
-    for (unsigned int i = 0; i < cyclists.size(); i++) {
-        std::cout << std::endl << cyclists[i].name << std::endl << "Pocet: " << cyclists[i].trains.size() << " Celkem: " << cyclists[i].getTotalDistance() << "km / " << cyclists[i].getTotalDuration() << "h\tPrumer: " << cyclists[i].getAverageDistance() << "hm / " << cyclists[i].getAverageDuration() << "h" << std::endl;
-        for (unsigned int j = 0; j < cyclists[i].trains.size(); j++) {
-            std::cout << " - Trenink " << j + 1 << " Ujeto: " << cyclists[i].trains[j].distance << "km / " << cyclists[i].trains[j].duration << "h" << std::endl;
+    for (int i = 0; i < cyclists.size(); i++) {
+        std::cout << std::endl << static_cast<char>(218) << "(" << cyclists[i].trains.size() << ") " << cyclists[i].name << " [TOT]: " << cyclists[i].getTotalDistance() << "km / " << cyclists[i].getTotalDuration() << "h [AVG]: " << cyclists[i].getAverageDistance() << "hm / " << cyclists[i].getAverageDuration() << "h" << std::endl;
+        for (int j = 0, j_max = cyclists[i].trains.size(); j < j_max; j++) {
+            std::cout << static_cast<char>(j == j_max - 1 ? 192 : 195) << "[" << ((j_max - 1 >= 10 && j + 1 < 10) || (j_max - 1 >= 100 && j + 1 < 100) ? "0" : "") << j + 1 << "] Ujeto: " << cyclists[i].trains[j].distance << "km / " << cyclists[i].trains[j].duration << "h" << std::endl;
         }
     }
 
-    for (unsigned int i = 0; i <= cyclists.size(); i++) {
+    for (int i = 0; i <= cyclists.size(); i++) {
         if (i < cyclists.size()) {
             cyclists[i].trains.purge();
         } else {
@@ -183,7 +184,7 @@ bool readFile(HeapArrayInterface<Cyclist>& database, const std::string& source) 
                 std::cout << "[ERR] Zaznam neplatny!" << std::endl;
                 continue;
             }
-            for (unsigned int i = 0; i < database.size() && !exists; i++) {
+            for (int i = 0; i < database.size() && !exists; i++) {
                 if (database[i].name == temporary[0]) {
                     database[i].trains.iter_current(HeapArrayInterface<Training>::INCREASE) = Training(train_distance, train_duration);
                     exists = true;
@@ -199,12 +200,12 @@ bool readFile(HeapArrayInterface<Cyclist>& database, const std::string& source) 
         temporary.purge();
         file.close();
 
-        for (unsigned int i = 0; i < database.size(); i++) {
+        for (int i = 0; i < database.size(); i++) {
             if (database[i].trains.size() == 0) {
                 database.resize(i, true);
                 break;
             } else {
-                for (unsigned int j = 0; j < database[i].trains.size(); j++) {
+                for (int j = 0; j < database[i].trains.size(); j++) {
                     if (database[i].trains[j].distance <= 0 || database[i].trains[j].duration <= 0) {
                         database[i].trains.resize(j, true);
                         break;
@@ -233,16 +234,16 @@ bool outputHtml(HeapArrayInterface<Cyclist> &cyclists, const std::string& target
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
         file << "<caption>Statistika cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Celkovy cas na kole [h]</th><th>Prumerna ujeta vzdalenost [km]</th><th>Prumerny cas na kole [h]</th></tr>" << std::endl;
-        for (unsigned int i = 0; i < cyclists.size(); i++) {
-            file << "<tr><th>" << cyclists[i].name << "</th><td>" << cyclists[i].getTotalDistance() << "</td><td>" << cyclists[i].getTotalDuration() << "</td><td>" << cyclists[i].getAverageDistance() << "</td><td>" << cyclists[i].getAverageDuration() << "</td></tr>" << std::endl;
+        for (int i = 0; i < cyclists.size(); i++) {
+            file << "<tr><td>" << cyclists[i].name << "</td><td>" << cyclists[i].getTotalDistance() << "</td><td>" << cyclists[i].getTotalDuration() << "</td><td>" << cyclists[i].getAverageDistance() << "</td><td>" << cyclists[i].getAverageDuration() << "</td></tr>" << std::endl;
         }
-        file << "</table>" << std::endl;
+        file << "</table>" << std::endl << "<br>" << std::endl;
         file << "<table style=\"width:100%; border:1px solid black; border-collapse:collapse\" rules=rows>" << std::endl;
         file << "<caption>Treninky cyklistu</caption>" << std::endl;
         file << "<tr><th>Zavodnik</th><th>Ujeta vzdalenost [km]</th><th>Cas treninku [h]</th></tr>" << std::endl;
-        for (unsigned int i = 0; i < cyclists.size(); i++) {
+        for (int i = 0; i < cyclists.size(); i++) {
             file << "<tr><td rowspan=" << cyclists[i].trains.size() + 1 << ">" << cyclists[i].name << "</td><td>Prumer: " << cyclists[i].getAverageDistance() << "</td><td>Prumer: " << cyclists[i].getAverageDuration() << "</td></tr>" << std::endl;
-            for (unsigned int j = 0; j < cyclists[i].trains.size(); j++) {
+            for (int j = 0; j < cyclists[i].trains.size(); j++) {
                 file << "<tr><td>" << cyclists[i].trains[j].distance << "</td><td>" << cyclists[i].trains[j].duration << "</td></tr>" << std::endl;
             }
         }
@@ -326,7 +327,7 @@ Cyclist::Cyclist(const std::string& name){
 double Cyclist::getTotalDistance(void) {
     if (this->lastDistanceCheck != (int) trains.size()) {
         this->totalDistance = 0;
-        for (unsigned int i = 0; i < trains.size(); i++) {
+        for (int i = 0; i < trains.size(); i++) {
             this->totalDistance += trains[i].distance;
         }
         this->lastDistanceCheck = trains.size();
@@ -342,7 +343,7 @@ double Cyclist::getTotalDistance(void) {
 double Cyclist::getTotalDuration(void) {
     if (this->lastDurationCheck != (int) trains.size()) {
         this->totalDuration = 0;
-        for (unsigned int i = 0; i < trains.size(); i++) {
+        for (int i = 0; i < trains.size(); i++) {
             this->totalDuration += trains[i].duration;
         }
         this->lastDurationCheck = trains.size();
@@ -425,7 +426,7 @@ unsigned int sumOfTrainings(const Cyclist& c, const std::string& source) {
     Constructor (equivalent to HeapArrayInterface<T> handler(0)).
 */
 template <typename T> HeapArrayInterface<T>::HeapArrayInterface(void) {
-    this->range = 0;
+    this->container_size = 0;
     iter_reset();
 }
 
@@ -434,12 +435,12 @@ template <typename T> HeapArrayInterface<T>::HeapArrayInterface(void) {
 
     @param range Size of HeapArrayInterface internal storage array.
 */
-template <typename T> HeapArrayInterface<T>::HeapArrayInterface(unsigned int range) {
-    if (range > 0) {
-        this->range = range;
-        this->content = new T[this->range];
+template <typename T> HeapArrayInterface<T>::HeapArrayInterface(int new_size) {
+    if (new_size > 0) {
+        this->container_size = new_size;
+        this->content_container = new T[this->container_size];
     } else {
-        this->range = 0;
+        this->container_size = 0;
     }
     iter_reset();
 }
@@ -447,9 +448,9 @@ template <typename T> HeapArrayInterface<T>::HeapArrayInterface(unsigned int ran
 /**
     Releases heap memory when size is greater than 0.
 */
-template <typename T> void HeapArrayInterface<T>::dealloc() {
-    if (this->range > 0) {
-        delete[] this->content;
+template <typename T> void HeapArrayInterface<T>::deallocate() {
+    if (this->container_size > 0) {
+        delete[] this->content_container;
     }
 }
 
@@ -460,23 +461,23 @@ template <typename T> void HeapArrayInterface<T>::dealloc() {
     @param keep_data Copy data from old storage array to new one.
     @return Success value;
 */
-template <typename T> bool HeapArrayInterface<T>::resize(unsigned int range, bool keep_data) {
+template <typename T> bool HeapArrayInterface<T>::resize(int new_size, bool keep_data) {
     iter_reset();
-    if (range == this->range || range < 0) {
+    if (new_size == this->container_size || new_size < 0) {
         return false;
-    } else if (range == 0) {
+    } else if (new_size == 0) {
         purge();
         return true;
     } else {
-        T* replacement = new T[range];
+        T* replacement = new T[new_size];
         if (keep_data) {
-            for (unsigned int i = 0; i < (range < this->range ? range : this->range); i++) {
-                replacement[i] = this->content[i];
+            for (int i = 0; i < (new_size < this->container_size ? new_size : this->container_size); i++) {
+                replacement[i] = this->content_container[i];
             }
         }
-        dealloc();
-        this->content = replacement;
-        this->range = range;
+        deallocate();
+        this->content_container = replacement;
+        this->container_size = new_size;
         replacement = NULL;
         return true;
     }
@@ -486,9 +487,9 @@ template <typename T> bool HeapArrayInterface<T>::resize(unsigned int range, boo
     Clear heap memory and set size of HeapArrayInterface internal storage to 0.
 */
 template <typename T> void HeapArrayInterface<T>::purge(void) {
-    dealloc();
-    this->range = 0;
-    this->content = NULL;
+    deallocate();
+    this->container_size = 0;
+    this->content_container = NULL;
 }
 
 /**
@@ -498,9 +499,9 @@ template <typename T> void HeapArrayInterface<T>::purge(void) {
     @param value Object to be stored.
     @return Success value.
 */
-template <typename T> bool HeapArrayInterface<T>::set(unsigned int index, const T& value) {
-    if (index >= 0 && index < this->range) {
-        this->content[index] = value;
+template <typename T> bool HeapArrayInterface<T>::set(int index, const T& value) {
+    if (in_bounds(index)) {
+        this->content_container[index] = value;
         return true;
     } else {
         return false;
@@ -512,8 +513,8 @@ template <typename T> bool HeapArrayInterface<T>::set(unsigned int index, const 
 
     @return Size of HeapArrayInterface internal storage.
 */
-template <typename T> unsigned int HeapArrayInterface<T>::size(void) {
-    return this->range;
+template <typename T> int HeapArrayInterface<T>::size(void) {
+    return this->container_size;
 }
 
 /**
@@ -529,9 +530,9 @@ template <typename T> void HeapArrayInterface<T>::iter_reset(void) {
     @param iterator_new New value of pseudo-iterator.
     @return Success value.
 */
-template <typename T> bool HeapArrayInterface<T>::iter_set(int iterator_new) {
-    if (iterator_new > -1 && iterator_new < this->range) {
-        this->internal_iterator = iterator_new;
+template <typename T> bool HeapArrayInterface<T>::iter_set(int iterator_position) {
+    if (in_bounds(iterator_position)) {
+        this->internal_iterator = iterator_position;
         return true;
     } else {
         return false;
@@ -544,17 +545,17 @@ template <typename T> bool HeapArrayInterface<T>::iter_set(int iterator_new) {
     @param iteratorSetting Operation to be done with pseudo-iterator.
     @return Object at index.
 */
-template <typename T> T& HeapArrayInterface<T>::iter_current(ITER_OPERATION iteratorSetting) {
+template <typename T> T& HeapArrayInterface<T>::iter_current(ITER_OPERATION iterator_operation) {
     int iterator_old = this->internal_iterator;
-    int iterator_new = this->internal_iterator + (int) iteratorSetting;
-    if (iterator_new > -1 && iterator_new < (int) this->range) {
+    int iterator_new = this->internal_iterator + iterator_operation;
+    if (in_bounds(iterator_new)) {
         this->internal_iterator = iterator_new;
     } else if (iterator_new < 0) {
-        this->internal_iterator = (int) this->range - 1;
-    } else if (iterator_new > (int) this->range - 1){
+        this->internal_iterator = this->container_size - 1;
+    } else if (iterator_new > this->container_size - 1){
         this->internal_iterator = 0;
     }
-    return this->content[iterator_old];
+    return this->content_container[iterator_old];
 }
 
 /**
@@ -573,4 +574,11 @@ template <typename T> T& HeapArrayInterface<T>::iter_current(void) {
 */
 template <typename T> int HeapArrayInterface<T>::iter_at(void) {
     return this->internal_iterator;
+}
+
+/**
+    Return true if index in in bounds (0 <= index < container_size)
+*/
+template <typename T> bool HeapArrayInterface<T>::in_bounds(int index) {
+    return (index >= 0 && index < this->container_size);
 }
