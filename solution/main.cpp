@@ -11,10 +11,10 @@
 
     @param T Object type.
 */
-template <typename T> class DynamicHandler {
+template <typename T> class HeapArrayInterface {
     private:
         /**
-            T type dynamic array (internal storage of DynamicHandler)
+            T type dynamic array (internal storage of HeapArrayInterface)
         */
         T *content;
         /**
@@ -30,8 +30,8 @@ template <typename T> class DynamicHandler {
     public:
         enum ITER_OPERATION {DECREASE = -1, IGNORE = 0, INCREASE = 1};
 
-        DynamicHandler(void);
-        DynamicHandler(unsigned int range);
+        HeapArrayInterface(void);
+        HeapArrayInterface(unsigned int range);
         void purge(void);
         void iter_reset(void);
         bool iter_set(int iterator_new);
@@ -48,7 +48,7 @@ template <typename T> class DynamicHandler {
             @param index Index of object.
             @return Object at index.
         */
-        T& operator[](unsigned int index) {
+        T& operator[](int index) {
             if (index >= 0 && index < this->range) {
                 return this->content[index];
             } else if (this->size() == 0) {
@@ -76,7 +76,7 @@ struct Training {
     Structure with cyclist's name and training sessions.
 
     @param Cyclist.name Name of cyclist.
-    @param Cyclist.trains DynamicHandler with training sessions.
+    @param Cyclist.trains HeapArrayInterface with training sessions.
 */
 struct Cyclist {
     private:
@@ -94,7 +94,7 @@ struct Cyclist {
         }
     public:
         std::string name;
-        DynamicHandler<Training> trains;
+        HeapArrayInterface<Training> trains;
 
         Cyclist(void);
         Cyclist(const std::string& name);
@@ -104,17 +104,16 @@ struct Cyclist {
         double getAverageDuration(void);
 };
 
-void sort(DynamicHandler<Cyclist>& cyclists);
-void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB);
-void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex);
-bool readFile(DynamicHandler<Cyclist> &database, const std::string& source);
-bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target);
+void sortSwap(HeapArrayInterface<Cyclist>& cyclists, int indexA, int indexB);
+void sortQuick(HeapArrayInterface<Cyclist>& cyclists, int zeroIndex, int aboveIndex);
+bool readFile(HeapArrayInterface<Cyclist> &database, const std::string& source);
+bool outputHtml(HeapArrayInterface<Cyclist> &cyclists, const std::string& target);
 unsigned int sumOfCyclists(const std::string& source);
 unsigned int sumOfTrainings(const Cyclist& c, const std::string& source);
 
 int main()
 {
-    DynamicHandler<Cyclist> cyclists;
+    HeapArrayInterface<Cyclist> cyclists;
     std::string s;
 
     std::cout << "[IMPORT] Zadejte cestu: ";
@@ -155,24 +154,24 @@ int main()
 }
 
 /**
-        Opens specified file and fills DynamicHandler<Cyclist> with its content.
+        Opens specified file and fills HeapArrayInterface<Cyclist> with its content.
 
-        @param database DynamicHandler<Cyclist> where to write to.
+        @param database HeapArrayInterface<Cyclist> where to write to.
         @param source Path to file.
         @return Success value.
 */
-bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
+bool readFile(HeapArrayInterface<Cyclist>& database, const std::string& source) {
     std::fstream file(source.c_str(), std::ios::in);
     if (file.is_open()) {
-        DynamicHandler<std::string> temporary(3);
+        HeapArrayInterface<std::string> temporary(3);
         database.resize(sumOfCyclists(source), false);
         std::string temp;
+        double train_distance, train_duration;
+        size_t position;
+        bool exists;
         while (std::getline(file, temp)) {
             temporary.iter_reset();
-            double train_distance;
-            double train_duration;
-            bool exists = false;
-            size_t position;
+            exists = false;
             while ((position = temp.find(';')) != std::string::npos) {
                 temporary.iter_current(temporary.INCREASE) = temp.substr(0, position);
                 temp.erase(0, position + 1);
@@ -186,14 +185,14 @@ bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
             }
             for (unsigned int i = 0; i < database.size() && !exists; i++) {
                 if (database[i].name == temporary[0]) {
-                    database[i].trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
+                    database[i].trains.iter_current(HeapArrayInterface<Training>::INCREASE) = Training(train_distance, train_duration);
                     exists = true;
                 }
             }
             if (!exists) {
                 database.iter_current() = Cyclist(temporary[0]);
                 database.iter_current().trains.resize(sumOfTrainings(database[database.iter_at()], source), false);
-                database.iter_current(database.INCREASE).trains.iter_current(DynamicHandler<Training>::INCREASE) = Training(train_distance, train_duration);
+                database.iter_current(database.INCREASE).trains.iter_current(HeapArrayInterface<Training>::INCREASE) = Training(train_distance, train_duration);
             }
 
         }
@@ -206,7 +205,7 @@ bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
                 break;
             } else {
                 for (unsigned int j = 0; j < database[i].trains.size(); j++) {
-                    if (database[i].trains[j].distance <= 0) {
+                    if (database[i].trains[j].distance <= 0 || database[i].trains[j].duration <= 0) {
                         database[i].trains.resize(j, true);
                         break;
                     }
@@ -220,13 +219,13 @@ bool readFile(DynamicHandler<Cyclist>& database, const std::string& source) {
 }
 
 /**
-    Opens specific file and writes DynamicHandler<Cyclist> content into structured HTML.
+    Opens specific file and writes HeapArrayInterface<Cyclist> content into structured HTML.
 
-    @param cyclists DynamicHandler<Cyclist> what to write from.
+    @param cyclists HeapArrayInterface<Cyclist> what to write from.
     @param target Path to file.
     @return Success value.
 */
-bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
+bool outputHtml(HeapArrayInterface<Cyclist> &cyclists, const std::string& target) {
     std::fstream file (target.c_str(), std::ios::out | std::ios::trunc);
     if (file.is_open()) {
         file << "<html>" << std::endl << "<head>" << std::endl << "<meta http-equiv=\"Content-Type\" content=\"test/html;charset=utf-8\">" << std::endl;
@@ -260,11 +259,11 @@ bool outputHtml(DynamicHandler<Cyclist> &cyclists, const std::string& target) {
 /**
     Quick sort algorithm, sort by total duration on trainings.
 
-    @param cyclists DynamicHandler<Cyclist> what to sort.
-    @param zeroIndex Lowest index in DynamicHandler<Cyclist>, default 0.
-    @param aboveIndex Maximal + 1 index in DynamicHandler<Cyclist>, can be DynamicHandler<Cyclist>::size() return value.
+    @param cyclists HeapArrayInterface<Cyclist> what to sort.
+    @param zeroIndex Lowest index in HeapArrayInterface<Cyclist>, default 0.
+    @param aboveIndex Maximal + 1 index in HeapArrayInterface<Cyclist>, can be HeapArrayInterface<Cyclist>::size() return value.
 */
-void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex) {
+void sortQuick(HeapArrayInterface<Cyclist>& cyclists, int zeroIndex, int aboveIndex) {
     if (zeroIndex < aboveIndex) {
         int betweenIndex = zeroIndex;
         for (int i = zeroIndex + 1; i < aboveIndex; i++) {
@@ -279,13 +278,13 @@ void sortQuick(DynamicHandler<Cyclist>& cyclists, int zeroIndex, int aboveIndex)
 }
 
 /**
-    Swap two objects in DynamicHandler<Cyclist>.
+    Swap two objects in HeapArrayInterface<Cyclist>.
 
-    @param cyclists DynamicHandler<Cyclist> container.
+    @param cyclists HeapArrayInterface<Cyclist> container.
     @param indexA Index A.
     @param indexB Index B.
 */
-void sortSwap(DynamicHandler<Cyclist>& cyclists, int indexA, int indexB) {
+void sortSwap(HeapArrayInterface<Cyclist>& cyclists, int indexA, int indexB) {
     Cyclist temporary = cyclists[indexB];
     cyclists[indexB] = cyclists[indexA];
     cyclists[indexA] = temporary;
@@ -423,9 +422,9 @@ unsigned int sumOfTrainings(const Cyclist& c, const std::string& source) {
 }
 
 /**
-    Constructor (equivalent to DynamicHandler<T> handler(0)).
+    Constructor (equivalent to HeapArrayInterface<T> handler(0)).
 */
-template <typename T> DynamicHandler<T>::DynamicHandler(void) {
+template <typename T> HeapArrayInterface<T>::HeapArrayInterface(void) {
     this->range = 0;
     iter_reset();
 }
@@ -433,9 +432,9 @@ template <typename T> DynamicHandler<T>::DynamicHandler(void) {
 /**
     Constructor.
 
-    @param range Size of DynamicHandler internal storage array.
+    @param range Size of HeapArrayInterface internal storage array.
 */
-template <typename T> DynamicHandler<T>::DynamicHandler(unsigned int range) {
+template <typename T> HeapArrayInterface<T>::HeapArrayInterface(unsigned int range) {
     if (range > 0) {
         this->range = range;
         this->content = new T[this->range];
@@ -448,20 +447,20 @@ template <typename T> DynamicHandler<T>::DynamicHandler(unsigned int range) {
 /**
     Releases heap memory when size is greater than 0.
 */
-template <typename T> void DynamicHandler<T>::dealloc() {
+template <typename T> void HeapArrayInterface<T>::dealloc() {
     if (this->range > 0) {
         delete[] this->content;
     }
 }
 
 /**
-    Resize DynamicHandler internal storage array to certain size.
+    Resize HeapArrayInterface internal storage array to certain size.
 
-    @param range New size of DynamicHandler internal storage array.
+    @param range New size of HeapArrayInterface internal storage array.
     @param keep_data Copy data from old storage array to new one.
     @return Success value;
 */
-template <typename T> bool DynamicHandler<T>::resize(unsigned int range, bool keep_data) {
+template <typename T> bool HeapArrayInterface<T>::resize(unsigned int range, bool keep_data) {
     iter_reset();
     if (range == this->range || range < 0) {
         return false;
@@ -484,22 +483,22 @@ template <typename T> bool DynamicHandler<T>::resize(unsigned int range, bool ke
 }
 
 /**
-    Clear heap memory and set size of DynamicHandler internal storage to 0.
+    Clear heap memory and set size of HeapArrayInterface internal storage to 0.
 */
-template <typename T> void DynamicHandler<T>::purge(void) {
+template <typename T> void HeapArrayInterface<T>::purge(void) {
     dealloc();
     this->range = 0;
     this->content = NULL;
 }
 
 /**
-    Set value in DynamicHandler on index to.
+    Set value in HeapArrayInterface on index to.
 
     @param index Index where to store object.
     @param value Object to be stored.
     @return Success value.
 */
-template <typename T> bool DynamicHandler<T>::set(unsigned int index, const T& value) {
+template <typename T> bool HeapArrayInterface<T>::set(unsigned int index, const T& value) {
     if (index >= 0 && index < this->range) {
         this->content[index] = value;
         return true;
@@ -509,18 +508,18 @@ template <typename T> bool DynamicHandler<T>::set(unsigned int index, const T& v
 }
 
 /**
-    Get size of DynamicHandler internal storage.
+    Get size of HeapArrayInterface internal storage.
 
-    @return Size of DynamicHandler internal storage.
+    @return Size of HeapArrayInterface internal storage.
 */
-template <typename T> unsigned int DynamicHandler<T>::size(void) {
+template <typename T> unsigned int HeapArrayInterface<T>::size(void) {
     return this->range;
 }
 
 /**
     Reset pseudo-iterator to 0.
 */
-template <typename T> void DynamicHandler<T>::iter_reset(void) {
+template <typename T> void HeapArrayInterface<T>::iter_reset(void) {
     this->internal_iterator = 0;
 }
 
@@ -530,7 +529,7 @@ template <typename T> void DynamicHandler<T>::iter_reset(void) {
     @param iterator_new New value of pseudo-iterator.
     @return Success value.
 */
-template <typename T> bool DynamicHandler<T>::iter_set(int iterator_new) {
+template <typename T> bool HeapArrayInterface<T>::iter_set(int iterator_new) {
     if (iterator_new > -1 && iterator_new < this->range) {
         this->internal_iterator = iterator_new;
         return true;
@@ -545,7 +544,7 @@ template <typename T> bool DynamicHandler<T>::iter_set(int iterator_new) {
     @param iteratorSetting Operation to be done with pseudo-iterator.
     @return Object at index.
 */
-template <typename T> T& DynamicHandler<T>::iter_current(ITER_OPERATION iteratorSetting) {
+template <typename T> T& HeapArrayInterface<T>::iter_current(ITER_OPERATION iteratorSetting) {
     int iterator_old = this->internal_iterator;
     int iterator_new = this->internal_iterator + (int) iteratorSetting;
     if (iterator_new > -1 && iterator_new < (int) this->range) {
@@ -559,11 +558,11 @@ template <typename T> T& DynamicHandler<T>::iter_current(ITER_OPERATION iterator
 }
 
 /**
-    Return object at pseudo-iterator index (equivalent to DynamicHandler::iter_current(DynamicHandler::IGNORE)).
+    Return object at pseudo-iterator index (equivalent to HeapArrayInterface::iter_current(HeapArrayInterface::IGNORE)).
 
     @return Object at index.
 */
-template <typename T> T& DynamicHandler<T>::iter_current(void) {
+template <typename T> T& HeapArrayInterface<T>::iter_current(void) {
     return iter_current(IGNORE);
 }
 
@@ -572,6 +571,6 @@ template <typename T> T& DynamicHandler<T>::iter_current(void) {
 
     @return Value of pseudo-iterator.
 */
-template <typename T> int DynamicHandler<T>::iter_at(void) {
+template <typename T> int HeapArrayInterface<T>::iter_at(void) {
     return this->internal_iterator;
 }
