@@ -116,27 +116,36 @@ int main()
 {
     HeapArrayInterface<Cyclist> cyclists;
     std::string s;
+    char simple;
 
-    std::cout << "[IMPORT] Zadejte cestu: ";
+    std::cout << "[IMPORT] Cesta k souboru: ";
     std::getline(std::cin, s);
     if (!readFile(cyclists, s)) {
-        std::cout << "Soubor nenalezen!" << std::endl;
+        std::cout << "[IMPORT] Chyba! Soubor nebyl nalezen!" << std::endl;
+        std::cout << std::endl << "Pro ukonceni stisknete klavesu ENTER ...";
+        std::cin.get();
         return 2;
     } else {
         sortQuick(cyclists, 0, cyclists.size());
+        std::cout << "[IMPORT] " << cyclists.size() << " cyklistu uspesne nacteno." << std::endl;
     }
 
-    std::cout << "[EXPORT] Zadejte cestu: ";
+    std::cout << std::endl << "[EXPORT] Cesta k souboru: ";
     std::getline(std::cin, s);
-    if (s.length() > 1 && !outputHtml(cyclists, s)) {
-        std::cout << "Export nebyl proveden!" << std::endl;
+    if (s.length() >= 1 && !outputHtml(cyclists, s)) {
+        std::cout << "[EXPORT] Export nebyl proveden!" << std::endl;
     }
 
-    std::cout << std::endl << "Seznam cyklistu (" << cyclists.size() << " cyklistu nacteno): " << std::endl << std::endl;
+    std::cout << std::endl << "[SIMPLE] Zobrazit podrobnou statistiku (Y): ";
+    std::cin >> simple;
+
+    std::cout << std::endl << "Statistika cyklistu:" << std::endl << std::endl;
     for (int i = 0; i < cyclists.size(); i++) {
-        std::cout << std::endl << static_cast<char>(218) << "(" << cyclists[i].trains.size() << ") " << cyclists[i].name << " [TOT]: " << cyclists[i].getTotalDistance() << "km / " << cyclists[i].getTotalDuration() << "h [AVG]: " << cyclists[i].getAverageDistance() << "hm / " << cyclists[i].getAverageDuration() << "h" << std::endl;
-        for (int j = 0, j_max = cyclists[i].trains.size(); j < j_max; j++) {
-            std::cout << static_cast<char>(j == j_max - 1 ? 192 : 195) << "[" << ((j_max - 1 >= 10 && j + 1 < 10) || (j_max - 1 >= 100 && j + 1 < 100) ? "0" : "") << j + 1 << "] Ujeto: " << cyclists[i].trains[j].distance << "km / " << cyclists[i].trains[j].duration << "h" << std::endl;
+        std::cout << cyclists[i].name << " (" << cyclists[i].trains.size() << ") [TOT]: " << cyclists[i].getTotalDistance() << "km / " << cyclists[i].getTotalDuration() << "h [AVG]: " << cyclists[i].getAverageDistance() << "hm / " << cyclists[i].getAverageDuration() << "h" << std::endl;
+        if (simple == 'Y' || simple == 'y') {
+            for (int j = 0, j_max = cyclists[i].trains.size(); j < j_max; j++) {
+                std::cout << static_cast<char>(j == j_max - 1 ? 192 : 195) << "[" << ((j_max - 1 >= 10 && j + 1 < 10) || (j_max - 1 >= 100 && j + 1 < 100) ? "0" : "") << j + 1 << "] Ujeto: " << cyclists[i].trains[j].distance << "km / " << cyclists[i].trains[j].duration << "h" << std::endl;
+            }
         }
     }
 
@@ -148,8 +157,9 @@ int main()
         }
     }
 
-    std::cin.get();
     std::cin.ignore();
+    std::cout << std::endl << "Pro ukonceni stisknete klavesu ENTER ...";
+    std::cin.get();
 
     return 0;
 }
