@@ -1,0 +1,12 @@
+﻿Autor: 
+	Martin Halfar HAL0160
+Cvičení: 
+	C/07 St 16:00 - 17:30
+Zadání:
+	5. Cyklisté
+	Cyklistická stáj chce pro své jezdce vytvořit program, který bude uchovávat informace o jejich výsledcích v trénincích. 
+	Po každém tréninku každý jezdec odevzdá informace o počtu najetých kilometrů a době, kterou strávil na kole. 
+	Vašim úkolem je ze vstupního souboru načíst tyto informace a vytvořit tabulku jezdců a základní statistiku. 
+	Tabulka bude seřazena podle doby, kterou jezdci strávili na kole. 
+	U každého cyklisty pak bude uvedeno, kolik kilometrů ujel, jakou průměrnou rychlostí, 
+	kolik času celkově strávil na kole, průměrný čas doby jeho tréninku a kolik kilometrů průměrně ujede.

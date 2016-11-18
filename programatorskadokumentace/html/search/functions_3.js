@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['getaveragedistance',['getAverageDistance',['../struct_cyclist.html#ac10adfd4accadae196637a2953fb57f5',1,'Cyclist']]],
-  ['getaverageduration',['getAverageDuration',['../struct_cyclist.html#ae09ef9446ee77a7057a4e3de42f620a9',1,'Cyclist']]],
-  ['gettotaldistance',['getTotalDistance',['../struct_cyclist.html#a83d17a23ebe25bdf86d4c556b4a66333',1,'Cyclist']]],
-  ['gettotalduration',['getTotalDuration',['../struct_cyclist.html#a351ae6004ffb3719014e6abd514abcd8',1,'Cyclist']]]
+  ['iter_5fat',['iter_at',['../class_heap_array_interface.html#af56aa9c46191a24c65a21acafe453d87',1,'HeapArrayInterface']]],
+  ['iter_5fcurrent',['iter_current',['../class_heap_array_interface.html#ab7952c8036e5ee968d6d949deaf608e4',1,'HeapArrayInterface::iter_current(ITER_OPERATION iterator_operation)'],['../class_heap_array_interface.html#ac52c0342324c5857c46eb0928a269ce9',1,'HeapArrayInterface::iter_current(void)']]],
+  ['iter_5freset',['iter_reset',['../class_heap_array_interface.html#ad9bfc40bce80e054b5b43446f0eb524b',1,'HeapArrayInterface']]],
+  ['iter_5fset',['iter_set',['../class_heap_array_interface.html#a11a24365cc69bdf3245c283b72992e4e',1,'HeapArrayInterface']]]
 ];

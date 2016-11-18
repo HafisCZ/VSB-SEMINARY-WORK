@@ -7,5 +7,5 @@ var struct_cyclist =
     [ "getTotalDistance", "struct_cyclist.html#a83d17a23ebe25bdf86d4c556b4a66333", null ],
     [ "getTotalDuration", "struct_cyclist.html#a351ae6004ffb3719014e6abd514abcd8", null ],
     [ "name", "struct_cyclist.html#a3e45c48f44660091e7a92c7e09bbcdc2", null ],
-    [ "trains", "struct_cyclist.html#a9df6133120f0198c7166cc4f240723e4", null ]
+    [ "trains", "struct_cyclist.html#a34a20d5f784a23e65ed0c9c4bc06d10b", null ]
 ];

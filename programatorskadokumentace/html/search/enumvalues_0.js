@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['decrease',['DECREASE',['../class_dynamic_handler.html#a7268e933dc7963b5b08da7a259281c92a3ac2a4c6cdae65056f58a2f8e5b5656e',1,'DynamicHandler']]]
+  ['decrease',['DECREASE',['../class_heap_array_interface.html#a9412b770fe127d48adec831732a2c2a7aadc97afe1e47ce64dee0875a2077657f',1,'HeapArrayInterface']]]
 ];

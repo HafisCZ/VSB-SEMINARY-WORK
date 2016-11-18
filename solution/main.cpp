@@ -136,10 +136,14 @@ int main()
         std::cout << "[EXPORT] Export nebyl proveden!" << std::endl;
     }
 
-    std::cout << std::endl << "[SIMPLE] Zobrazit podrobnou statistiku (Y): ";
-    std::cin >> simple;
+    if (cyclists.size() > 0) {
+        std::cout << std::endl << "[SIMPLE] Zobrazit podrobnou statistiku (Y): ";
+        std::cin >> simple;
+        std::cin.ignore();
 
-    std::cout << std::endl << "Statistika cyklistu:" << std::endl << std::endl;
+        std::cout << std::endl << "Statistika cyklistu:" << std::endl << std::endl;
+    }
+
     for (int i = 0; i < cyclists.size(); i++) {
         std::cout << cyclists[i].name << " (" << cyclists[i].trains.size() << ") [TOT]: " << cyclists[i].getTotalDistance() << "km / " << cyclists[i].getTotalDuration() << "h [AVG]: " << cyclists[i].getAverageDistance() << "hm / " << cyclists[i].getAverageDuration() << "h" << std::endl;
         if (simple == 'Y' || simple == 'y') {
@@ -157,7 +161,6 @@ int main()
         }
     }
 
-    std::cin.ignore();
     std::cout << std::endl << "Pro ukonceni stisknete klavesu ENTER ...";
     std::cin.get();
 

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['purge',['purge',['../class_dynamic_handler.html#a9dd56b09a10402fa9a7c5847b22e1998',1,'DynamicHandler']]]
+  ['readfile',['readFile',['../main_8cpp.html#ace913a8aab57d7589262f2a8dbaf5ad0',1,'main.cpp']]],
+  ['resize',['resize',['../class_heap_array_interface.html#ab15eb7bdf60ff29f2c5f96aba1bd07eb',1,'HeapArrayInterface']]]
 ];

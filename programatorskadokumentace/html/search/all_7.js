@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['operator_5b_5d',['operator[]',['../class_dynamic_handler.html#a06c4abdaadd4c940a4312b31a960479b',1,'DynamicHandler']]],
-  ['outputhtml',['outputHtml',['../main_8cpp.html#a3d4782b5055a9104fd25cfb4e0fca11b',1,'main.cpp']]]
+  ['operator_5b_5d',['operator[]',['../class_heap_array_interface.html#ab30c039841e951b5bf1892ed44eb128d',1,'HeapArrayInterface']]],
+  ['outputhtml',['outputHtml',['../main_8cpp.html#a53e8cd514bfda3ee2db5406f2e50c9fb',1,'main.cpp']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['purge',['purge',['../class_dynamic_handler.html#a9dd56b09a10402fa9a7c5847b22e1998',1,'DynamicHandler']]]
+  ['purge',['purge',['../class_heap_array_interface.html#a57329e6bf4c4a141cf8f6d610cb4637c',1,'HeapArrayInterface']]]
 ];

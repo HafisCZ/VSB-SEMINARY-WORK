@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['getaveragedistance',['getAverageDistance',['../struct_cyclist.html#ac10adfd4accadae196637a2953fb57f5',1,'Cyclist']]],
-  ['getaverageduration',['getAverageDuration',['../struct_cyclist.html#ae09ef9446ee77a7057a4e3de42f620a9',1,'Cyclist']]],
-  ['gettotaldistance',['getTotalDistance',['../struct_cyclist.html#a83d17a23ebe25bdf86d4c556b4a66333',1,'Cyclist']]],
-  ['gettotalduration',['getTotalDuration',['../struct_cyclist.html#a351ae6004ffb3719014e6abd514abcd8',1,'Cyclist']]]
+  ['heaparrayinterface',['HeapArrayInterface',['../class_heap_array_interface.html',1,'HeapArrayInterface&lt; T &gt;'],['../class_heap_array_interface.html#aa0842b32d6f1a0828520f2aca9ff00b5',1,'HeapArrayInterface::HeapArrayInterface(void)'],['../class_heap_array_interface.html#ac76a98122196c5e35ecd24ffe023dbef',1,'HeapArrayInterface::HeapArrayInterface(int new_size)']]],
+  ['heaparrayinterface_3c_20training_20_3e',['HeapArrayInterface&lt; Training &gt;',['../class_heap_array_interface.html',1,'']]]
 ];
